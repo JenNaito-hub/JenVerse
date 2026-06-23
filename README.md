@@ -49,8 +49,9 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — the root route redirects
-to `/dashboard`.
+Open [http://localhost:3100](http://localhost:3100) — the root route redirects
+to `/dashboard`. (The dev server runs on port `3100` so it won't clash with
+another app on `3000`.)
 
 ### Scripts
 
