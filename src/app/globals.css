@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* JENVERSE light theme — premium SaaS */
+    --background: 75 16% 96%; /* #F5F6F2 canvas */
+    --foreground: 0 0% 12%; /* #1F1F1F */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+
+    /* Primary lime #D7F205 — used as accent; dark text on lime */
+    --primary: 68 96% 48%;
+    --primary-foreground: 0 0% 12%;
+
+    --secondary: 75 12% 92%;
+    --secondary-foreground: 0 0% 12%;
+
+    --muted: 75 10% 93%;
+    --muted-foreground: 0 0% 42%;
+
+    --accent: 68 96% 48%;
+    --accent-foreground: 0 0% 12%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 80 8% 87%;
+    --input: 80 8% 87%;
+    --ring: 0 0% 12%;
+
+    --radius: 0.85rem;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 96%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 96%;
+
+    --primary: 68 96% 48%;
+    --primary-foreground: 0 0% 12%;
+
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 96%;
+
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 64%;
+
+    --accent: 68 96% 48%;
+    --accent-foreground: 0 0% 12%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 68 96% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Subtle dotted grid used in hero / empty states */
+  .bg-dotted {
+    background-image: radial-gradient(
+      hsl(var(--foreground) / 0.06) 1px,
+      transparent 1px
+    );
+    background-size: 18px 18px;
+  }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(0 0% 100% / 0.45),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+}
+
+/* Custom scrollbar — premium feel */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--foreground) / 0.16);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground) / 0.28);
+  background-clip: padding-box;
+}

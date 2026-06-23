@@ -1,0 +1,93 @@
+import type { LucideIcon } from "lucide-react";
+
+export interface NavItem {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+  badge?: string;
+}
+
+export type ProjectStatus = "active" | "draft" | "archived";
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  status: ProjectStatus;
+  color: string;
+  assets: number;
+  members: TeamMember[];
+  updatedAt: string;
+  progress: number;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  avatar: string;
+  role: string;
+}
+
+export type GenerationType = "knowledge" | "image";
+
+export interface HistoryItem {
+  id: string;
+  type: GenerationType;
+  title: string;
+  prompt: string;
+  model: string;
+  project?: string;
+  createdAt: string;
+  tokens?: number;
+  thumbnail?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+}
+
+export interface KnowledgeConversation {
+  id: string;
+  title: string;
+  preview: string;
+  model: string;
+  updatedAt: string;
+  messages: ChatMessage[];
+}
+
+export interface GeneratedImage {
+  id: string;
+  prompt: string;
+  url: string;
+  model: string;
+  aspectRatio: string;
+  createdAt: string;
+  liked: boolean;
+}
+
+export interface StatCard {
+  id: string;
+  label: string;
+  value: string;
+  change: number;
+  trend: "up" | "down";
+  icon: LucideIcon;
+}
+
+export interface ActivityItem {
+  id: string;
+  actor: TeamMember;
+  action: string;
+  target: string;
+  type: GenerationType | "project" | "system";
+  createdAt: string;
+}
+
+export interface UsagePoint {
+  label: string;
+  knowledge: number;
+  image: number;
+}
