@@ -2,10 +2,10 @@
 
 A premium AI workspace for **knowledge generation** and **image creation**.
 
-> **MVP V1 — Frontend only.** This release ships a fully designed, interactive
-> UI powered entirely by mock data. No backend or AI APIs are wired yet; the
-> data layer is intentionally isolated so the integration phase can swap mocks
-> for live calls without touching the UI.
+> **Runs with or without a backend.** Every integration degrades gracefully:
+> with an empty `.env.local` the app runs in **demo mode** (mock data, auth
+> bypassed, AI returns preview responses). Add a key and that feature switches
+> to the real provider automatically — no code changes needed.
 
 ## Tech stack
 
@@ -24,12 +24,27 @@ A premium AI workspace for **knowledge generation** and **image creation**.
 
 ## Features
 
+- **Auth** — login, signup and password-reset pages backed by Supabase (bypassed in demo mode).
 - **Dashboard** — stat cards, weekly usage chart, activity feed, quick actions, recent projects.
-- **Knowledge AI** — chat-style text generation workspace with conversation history, model picker and prompt starters.
-- **Image AI** — prompt composer (model / style / aspect ratio) with a generated-image gallery.
+- **Knowledge AI** — chat workspace wired to `/api/knowledge` (OpenAI / Gemini) with conversation history, model picker and prompt starters.
+- **Image AI** — prompt composer wired to `/api/image` (DALL·E / Gemini) with a generated-image gallery.
+- **Templates** — curated prompt library for Knowledge & Image AI with filtering and a "use template" dialog.
 - **Projects** — filterable project grid with status, progress, members and a create-project dialog.
-- **History** — searchable, filterable log of every generation.
+- **History** — searchable log of every generation, persisted to Supabase when configured.
 - **Settings** — profile, workspace, billing, API keys and notification preferences.
+
+## How the backend wiring works
+
+| Concern        | When configured                                   | Demo fallback                |
+| -------------- | ------------------------------------------------- | ---------------------------- |
+| **Auth**       | Supabase email/password + protected routes        | Auth bypassed, straight in   |
+| **Knowledge**  | OpenAI (`gpt-*`) or Gemini via `/api/knowledge`    | Preview response             |
+| **Image**      | OpenAI (DALL·E / GPT Image) or Gemini via `/api/image` | Random sample image     |
+| **Data**       | Reads/writes Supabase (`history`, `projects`, …)   | Mock datasets in `src/data`  |
+
+Detection lives in `src/lib/env.ts`; the AI providers in `src/lib/ai/`; the
+data-access layer in `src/lib/db.ts`. The Supabase schema is in
+`supabase/schema.sql`.
 
 ## Design system
 
@@ -94,8 +109,15 @@ src/
 └── types/                  # Shared TypeScript types
 ```
 
+## Enabling real providers
+
+1. Copy `.env.example` → `.env.local`.
+2. Add any of: `OPENAI_API_KEY`, `GEMINI_API_KEY`, and/or the Supabase keys.
+3. For Supabase, create a project and run `supabase/schema.sql` in its SQL editor.
+4. Restart `npm run dev`. Configured features switch from mock to live automatically.
+
 ## Roadmap
 
-1. **V1 (this release)** — Frontend with mock data.
-2. **V2** — Supabase auth + persistence; wire OpenAI & Gemini for real generations.
-3. **V3** — Team collaboration, billing, and usage metering.
+1. **V1** — Frontend with mock data. ✅
+2. **V2 (this release)** — Auth, OpenAI/Gemini generation, Supabase persistence with graceful demo fallback. ✅
+3. **V3** — Streaming responses, team collaboration, billing & usage metering.

@@ -5,10 +5,13 @@ import {
   ProjectsView,
   NewProjectDialog,
 } from "@/components/projects/projects-view";
+import { getProjects } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Projects" };
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const projects = await getProjects();
+
   return (
     <div className="space-y-8 animate-fade-in">
       <PageHeader
@@ -17,7 +20,7 @@ export default function ProjectsPage() {
       >
         <NewProjectDialog />
       </PageHeader>
-      <ProjectsView />
+      <ProjectsView projects={projects} />
     </div>
   );
 }

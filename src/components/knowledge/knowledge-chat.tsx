@@ -9,6 +9,7 @@ import {
   Copy,
   ThumbsUp,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -42,32 +43,59 @@ export function KnowledgeChat() {
   );
   const [model, setModel] = useState<string>(AI_MODELS.knowledge[0].id);
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
 
   const active = conversations.find((c) => c.id === activeId) ?? null;
 
-  const handleSend = () => {
-    if (!input.trim() || !active) return;
+  const handleSend = async () => {
+    if (!input.trim() || !active || sending) return;
     const userMsg: ChatMessage = {
       id: `m-${Date.now()}`,
       role: "user",
       content: input.trim(),
       createdAt: new Date().toISOString(),
     };
+    const history = [...active.messages, userMsg].map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === active.id ? { ...c, messages: [...c.messages, userMsg] } : c
+      )
+    );
+    setInput("");
+    setSending(true);
+
+    let content =
+      "Sorry, something went wrong reaching the model. Please try again.";
+    try {
+      const res = await fetch("/api/knowledge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history, model }),
+      });
+      const data = await res.json();
+      if (data?.content) content = data.content;
+    } catch {
+      // Network error — keep the fallback message.
+    }
+
     const assistantMsg: ChatMessage = {
       id: `m-${Date.now() + 1}`,
       role: "assistant",
-      content:
-        "This is a preview response. In V1 the UI is wired with mock data — connect OpenAI or Gemini to stream a real answer here.",
+      content,
       createdAt: new Date().toISOString(),
     };
     setConversations((prev) =>
       prev.map((c) =>
         c.id === active.id
-          ? { ...c, messages: [...c.messages, userMsg, assistantMsg] }
+          ? { ...c, messages: [...c.messages, assistantMsg] }
           : c
       )
     );
-    setInput("");
+    setSending(false);
   };
 
   const startNew = () => {
@@ -157,13 +185,14 @@ export function KnowledgeChat() {
         <ScrollArea className="flex-1">
           <div className="mx-auto max-w-3xl space-y-6 p-5">
             {active && active.messages.length > 0 ? (
-              active.messages.map((m) => (
-                <MessageBubble key={m.id} message={m} />
-              ))
+              <>
+                {active.messages.map((m) => (
+                  <MessageBubble key={m.id} message={m} />
+                ))}
+                {sending && <ThinkingBubble />}
+              </>
             ) : (
-              <EmptyConversation
-                onPick={(p) => setInput(p)}
-              />
+              <EmptyConversation onPick={(p) => setInput(p)} />
             )}
           </div>
         </ScrollArea>
@@ -192,10 +221,14 @@ export function KnowledgeChat() {
                   variant="primary"
                   size="sm"
                   onClick={handleSend}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || sending}
                 >
-                  <Send className="h-4 w-4" />
-                  Send
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {sending ? "Thinking…" : "Send"}
                 </Button>
               </div>
             </div>
@@ -244,6 +277,21 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             </Button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ThinkingBubble() {
+  return (
+    <div className="flex gap-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-primary">
+        <Sparkles className="h-4 w-4" />
+      </span>
+      <div className="flex items-center gap-1.5 rounded-2xl bg-secondary px-4 py-3.5">
+        <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground" />
       </div>
     </div>
   );

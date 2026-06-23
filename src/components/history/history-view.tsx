@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 
 import { formatRelativeTime, formatNumber } from "@/lib/utils";
-import { historyItems } from "@/data/history";
 import type { GenerationType, HistoryItem } from "@/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +31,11 @@ import {
 
 type Filter = "all" | GenerationType;
 
-export function HistoryView() {
+export function HistoryView({ items }: { items: HistoryItem[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
 
-  const filtered = historyItems.filter((item) => {
+  const filtered = items.filter((item) => {
     const matchesFilter = filter === "all" || item.type === filter;
     const matchesQuery =
       item.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -94,6 +93,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
             alt={item.title}
             fill
             sizes="48px"
+            unoptimized
             className="object-cover"
           />
         ) : (

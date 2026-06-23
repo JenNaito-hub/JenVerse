@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { FolderKanban, Plus, Search } from "lucide-react";
 
-import { projects as allProjects } from "@/data/projects";
-import type { ProjectStatus } from "@/types";
+import type { Project, ProjectStatus } from "@/types";
 import { ProjectCard } from "./project-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
@@ -29,11 +28,11 @@ import { Textarea } from "@/components/ui/textarea";
 
 type Filter = "all" | ProjectStatus;
 
-export function ProjectsView() {
+export function ProjectsView({ projects }: { projects: Project[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
 
-  const filtered = allProjects.filter((p) => {
+  const filtered = projects.filter((p) => {
     const matchesFilter = filter === "all" || p.status === filter;
     const matchesQuery =
       p.name.toLowerCase().includes(query.toLowerCase()) ||

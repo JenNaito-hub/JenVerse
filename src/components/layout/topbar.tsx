@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { signOut } from "@/lib/auth/actions";
 import { MobileNav } from "./mobile-nav";
 
 export function Topbar() {
@@ -94,10 +95,17 @@ export function Topbar() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </DropdownMenuItem>
+            <form action={signOut}>
+              <DropdownMenuItem asChild>
+                <button
+                  type="submit"
+                  className="w-full text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
+              </DropdownMenuItem>
+            </form>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

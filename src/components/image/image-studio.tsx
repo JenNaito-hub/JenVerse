@@ -29,25 +29,38 @@ export function ImageStudio() {
   const [ratio, setRatio] = useState(aspectRatios[0]);
   const [loading, setLoading] = useState(false);
 
-  const handleGenerate = () => {
-    if (!prompt.trim()) return;
+  const handleGenerate = async () => {
+    if (!prompt.trim() || loading) return;
     setLoading(true);
-    // Mock generation latency — V1 has no API wired.
-    setTimeout(() => {
-      const newImage: GeneratedImage = {
-        id: `img-${Date.now()}`,
-        prompt: prompt.trim(),
-        url: generatedImages[
-          Math.floor(Math.random() * generatedImages.length)
-        ].url,
-        model: AI_MODELS.image.find((m) => m.id === model)?.label ?? "DALL·E 3",
-        aspectRatio: ratio,
-        createdAt: new Date().toISOString(),
-        liked: false,
-      };
-      setImages((prev) => [newImage, ...prev]);
-      setLoading(false);
-    }, 1400);
+
+    const label =
+      AI_MODELS.image.find((m) => m.id === model)?.label ?? "DALL·E 3";
+    let url =
+      generatedImages[Math.floor(Math.random() * generatedImages.length)].url;
+
+    try {
+      const res = await fetch("/api/image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: prompt.trim(), model, aspectRatio: ratio, style }),
+      });
+      const data = await res.json();
+      if (data?.url) url = data.url;
+    } catch {
+      // Network error — keep the mock fallback image.
+    }
+
+    const newImage: GeneratedImage = {
+      id: `img-${Date.now()}`,
+      prompt: prompt.trim(),
+      url,
+      model: label,
+      aspectRatio: ratio,
+      createdAt: new Date().toISOString(),
+      liked: false,
+    };
+    setImages((prev) => [newImage, ...prev]);
+    setLoading(false);
   };
 
   const toggleLike = (id: string) =>
@@ -189,6 +202,7 @@ function GalleryTile({
           alt={image.prompt}
           fill
           sizes="(max-width: 640px) 50vw, 33vw"
+          unoptimized
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
