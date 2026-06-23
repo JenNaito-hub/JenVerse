@@ -8,12 +8,16 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { prompt, model, aspectRatio, style } = body as {
-      prompt: string;
-      model: string;
-      aspectRatio: string;
-      style?: string;
-    };
+    const { prompt, model, aspectRatio, style, mode, sourceImage, strength } =
+      body as {
+        prompt: string;
+        model: string;
+        aspectRatio: string;
+        style?: string;
+        mode?: "text" | "image";
+        sourceImage?: string;
+        strength?: number;
+      };
 
     if (!prompt?.trim()) {
       return NextResponse.json(
@@ -22,12 +26,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await generateImage(
-      prompt.trim(),
-      model ?? "dall-e-3",
-      aspectRatio ?? "1:1",
-      style
-    );
+    const result = await generateImage({
+      prompt: prompt.trim(),
+      model: model ?? "dall-e-3",
+      aspectRatio: aspectRatio ?? "1:1",
+      style,
+      mode,
+      sourceImage,
+      strength,
+    });
 
     await addHistoryItem({
       type: "image",

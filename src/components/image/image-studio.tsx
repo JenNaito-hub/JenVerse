@@ -1,9 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Sparkles, Heart, Download, Wand2, Loader2, Workflow, X } from "lucide-react";
+import {
+  Sparkles,
+  Heart,
+  Download,
+  Wand2,
+  Loader2,
+  Workflow,
+  X,
+  ImageUp,
+  Trash2,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AI_MODELS } from "@/lib/constants";
@@ -14,6 +24,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -22,10 +33,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type GenMode = "text" | "image";
+
 interface ActiveWorkflow {
   id: string;
   name: string;
   modelId?: string;
+  mode?: GenMode;
 }
 
 export function ImageStudio({
@@ -34,28 +48,56 @@ export function ImageStudio({
   activeWorkflow?: ActiveWorkflow;
 }) {
   const [images, setImages] = useState<GeneratedImage[]>(generatedImages);
+  const [mode, setMode] = useState<GenMode>(activeWorkflow?.mode ?? "text");
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState<string>(
     activeWorkflow?.modelId ?? AI_MODELS.image[0].id
   );
   const [style, setStyle] = useState(imageStyles[0]);
   const [ratio, setRatio] = useState(aspectRatios[0]);
+  const [sourceImage, setSourceImage] = useState<string | null>(null);
+  const [strength, setStrength] = useState(65);
   const [loading, setLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleSourceFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => setSourceImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const canGenerate =
+    prompt.trim().length > 0 &&
+    !loading &&
+    (mode === "text" || sourceImage !== null);
 
   const handleGenerate = async () => {
-    if (!prompt.trim() || loading) return;
+    if (!canGenerate) return;
     setLoading(true);
 
     const label =
       AI_MODELS.image.find((m) => m.id === model)?.label ?? "DALL·E 3";
+    // In image-to-image, echo the source as the mock fallback so the result
+    // visibly relates to the upload.
     let url =
-      generatedImages[Math.floor(Math.random() * generatedImages.length)].url;
+      mode === "image" && sourceImage
+        ? sourceImage
+        : generatedImages[Math.floor(Math.random() * generatedImages.length)]
+            .url;
 
     try {
       const res = await fetch("/api/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, aspectRatio: ratio, style }),
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          model,
+          aspectRatio: ratio,
+          style,
+          mode,
+          sourceImage: mode === "image" ? sourceImage : undefined,
+          strength,
+        }),
       });
       const data = await res.json();
       if (data?.url) url = data.url;
@@ -120,16 +162,96 @@ export function ImageStudio({
         </div>
 
         <div className="space-y-4">
+          <Tabs
+            value={mode}
+            onValueChange={(v) => setMode(v as GenMode)}
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="text">Text to Image</TabsTrigger>
+              <TabsTrigger value="image">Image to Image</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {mode === "image" && (
+            <div className="space-y-2">
+              <Label>Source image</Label>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleSourceFile(file);
+                }}
+              />
+              {sourceImage ? (
+                <div className="relative overflow-hidden rounded-xl border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={sourceImage}
+                    alt="Source"
+                    className="h-40 w-full object-cover"
+                  />
+                  <button
+                    onClick={() => setSourceImage(null)}
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-background/90 text-foreground transition-colors hover:bg-background"
+                    aria-label="Remove image"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-secondary/40 py-8 text-sm text-muted-foreground transition-colors hover:bg-secondary"
+                >
+                  <ImageUp className="h-6 w-6" />
+                  Upload a reference image
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="prompt">Prompt</Label>
+            <Label htmlFor="prompt">
+              {mode === "image" ? "Describe the changes" : "Prompt"}
+            </Label>
             <Textarea
               id="prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="A serene Scandinavian living room bathed in golden hour light, editorial photography…"
+              placeholder={
+                mode === "image"
+                  ? "Restyle as a cozy autumn scene, warm tones, soft light…"
+                  : "A serene Scandinavian living room bathed in golden hour light, editorial photography…"
+              }
               className="min-h-[110px]"
             />
           </div>
+
+          {mode === "image" && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="strength">Transformation strength</Label>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {strength}%
+                </span>
+              </div>
+              <input
+                id="strength"
+                type="range"
+                min={10}
+                max={95}
+                value={strength}
+                onChange={(e) => setStrength(Number(e.target.value))}
+                className="h-2 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-primary"
+              />
+              <p className="text-xs text-muted-foreground">
+                Lower keeps the original; higher reimagines it more freely.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Model</Label>
@@ -191,7 +313,7 @@ export function ImageStudio({
             variant="primary"
             className="w-full"
             onClick={handleGenerate}
-            disabled={!prompt.trim() || loading}
+            disabled={!canGenerate}
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

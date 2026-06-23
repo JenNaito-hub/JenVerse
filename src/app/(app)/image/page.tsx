@@ -17,7 +17,7 @@ export default async function ImagePage({
     : null;
 
   let activeWorkflow:
-    | { id: string; name: string; modelId?: string }
+    | { id: string; name: string; modelId?: string; mode?: "text" | "image" }
     | undefined;
 
   if (workflow) {
@@ -27,10 +27,15 @@ export default async function ImagePage({
     const modelStep = current?.steps.find((s) => s.type === "model");
     const modelLabel = modelStep?.config?.model;
     const matched = AI_MODELS.image.find((m) => m.label === modelLabel);
+    // Workflows that take an image input start in image-to-image mode.
+    const hasImageInput = current?.steps.some(
+      (s) => s.type === "input" && s.config?.field === "image"
+    );
     activeWorkflow = {
       id: workflow.id,
       name: workflow.name,
       modelId: matched?.id,
+      mode: hasImageInput ? "image" : "text",
     };
   }
 

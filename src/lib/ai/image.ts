@@ -30,14 +30,25 @@ function resolveProvider(model: string): "openai" | "gemini" | "mock" {
   return "mock";
 }
 
-export async function generateImage(
-  prompt: string,
-  model: string,
-  aspectRatio: string,
-  style?: string
-): Promise<ImageResult> {
+export interface ImageRequest {
+  prompt: string;
+  model: string;
+  aspectRatio: string;
+  style?: string;
+  mode?: "text" | "image";
+  sourceImage?: string;
+  strength?: number;
+}
+
+export async function generateImage(req: ImageRequest): Promise<ImageResult> {
+  const { prompt, model, aspectRatio, style, mode, sourceImage } = req;
   const provider = resolveProvider(model);
   const fullPrompt = style ? `${prompt}. Style: ${style}.` : prompt;
+
+  // Image-to-image is best-effort: with no provider that supports edits we
+  // echo the uploaded source so the mock result visibly relates to it.
+  const mockFallback =
+    mode === "image" && sourceImage ? sourceImage : mockUrl();
 
   try {
     if (provider === "openai") {
@@ -57,7 +68,7 @@ export async function generateImage(
         ? item.url
         : item?.b64_json
           ? `data:image/png;base64,${item.b64_json}`
-          : mockUrl();
+          : mockFallback;
       return { url, provider: "openai", model: openaiModel };
     }
 
@@ -83,5 +94,5 @@ export async function generateImage(
     console.error("[image] provider error, falling back to mock:", error);
   }
 
-  return { url: mockUrl(), provider: "mock", model };
+  return { url: mockFallback, provider: "mock", model };
 }
