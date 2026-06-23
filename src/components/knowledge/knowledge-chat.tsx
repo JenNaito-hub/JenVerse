@@ -10,6 +10,7 @@ import {
   ThumbsUp,
   RefreshCw,
   Loader2,
+  Info,
 } from "lucide-react";
 
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -36,8 +37,10 @@ import { getInitials } from "@/lib/utils";
 
 export function KnowledgeChat({
   initialPrompt = "",
+  demoMode = false,
 }: {
   initialPrompt?: string;
+  demoMode?: boolean;
 }) {
   const [conversations, setConversations] = useState<KnowledgeConversation[]>(
     knowledgeConversations
@@ -117,7 +120,22 @@ export function KnowledgeChat({
   };
 
   return (
-    <div className="grid h-[calc(100vh-9.5rem)] grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
+    <div className="space-y-3">
+      {demoMode && (
+        <div className="flex items-start gap-2.5 rounded-2xl border border-border bg-secondary/60 px-4 py-3 text-sm">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            <span className="font-medium text-foreground">Demo mode.</span> No
+            AI key is configured, so replies are sample text. Add{" "}
+            <code className="font-mono text-foreground">OPENAI_API_KEY</code> or{" "}
+            <code className="font-mono text-foreground">GEMINI_API_KEY</code> to{" "}
+            <code className="font-mono text-foreground">.env.local</code> to get
+            real answers.
+          </p>
+        </div>
+      )}
+
+      <div className="grid h-[calc(100vh-9.5rem)] grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
       {/* Conversation list */}
       <Card className="hidden flex-col overflow-hidden lg:flex">
         <div className="border-b border-border p-3">
@@ -239,6 +257,7 @@ export function KnowledgeChat({
           </div>
         </div>
       </Card>
+      </div>
     </div>
   );
 }

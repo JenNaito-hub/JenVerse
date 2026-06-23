@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/shared/page-header";
 import { ImageStudio } from "@/components/image/image-studio";
 import { getWorkflowById } from "@/lib/db";
+import { getProviderStatus } from "@/lib/env";
 import { AI_MODELS } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Image AI" };
@@ -48,6 +49,7 @@ export default async function ImagePage({
       <ImageStudio
         activeWorkflow={activeWorkflow}
         initialPrompt={searchParams.prompt ?? ""}
+        demoMode={!getProviderStatus().openai && !getProviderStatus().gemini}
       />
     </div>
   );

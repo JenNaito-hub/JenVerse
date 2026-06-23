@@ -13,6 +13,7 @@ import {
   X,
   ImageUp,
   Trash2,
+  Info,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -45,9 +46,11 @@ interface ActiveWorkflow {
 export function ImageStudio({
   activeWorkflow,
   initialPrompt = "",
+  demoMode = false,
 }: {
   activeWorkflow?: ActiveWorkflow;
   initialPrompt?: string;
+  demoMode?: boolean;
 }) {
   const [images, setImages] = useState<GeneratedImage[]>(generatedImages);
   const [mode, setMode] = useState<GenMode>(activeWorkflow?.mode ?? "text");
@@ -129,6 +132,21 @@ export function ImageStudio({
 
   return (
     <div className="space-y-4">
+      {demoMode && (
+        <div className="flex items-start gap-2.5 rounded-2xl border border-border bg-secondary/60 px-4 py-3 text-sm">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            <span className="font-medium text-foreground">Demo mode.</span> No
+            AI key is configured, so Generate returns sample images instead of
+            drawing your prompt. Add{" "}
+            <code className="font-mono text-foreground">OPENAI_API_KEY</code> or{" "}
+            <code className="font-mono text-foreground">GEMINI_API_KEY</code> to{" "}
+            <code className="font-mono text-foreground">.env.local</code> and
+            restart to generate real images.
+          </p>
+        </div>
+      )}
+
       {activeWorkflow && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-foreground bg-foreground px-4 py-3 text-background">
           <div className="flex items-center gap-2.5">
