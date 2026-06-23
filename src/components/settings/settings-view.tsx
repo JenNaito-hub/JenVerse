@@ -22,7 +22,17 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function SettingsView() {
+export interface ProviderStatus {
+  openai: boolean;
+  gemini: boolean;
+  supabase: boolean;
+}
+
+export function SettingsView({
+  providerStatus,
+}: {
+  providerStatus: ProviderStatus;
+}) {
   return (
     <Tabs defaultValue="profile" className="space-y-6">
       <TabsList className="flex-wrap">
@@ -58,7 +68,7 @@ export function SettingsView() {
         <BillingSettings />
       </TabsContent>
       <TabsContent value="api">
-        <ApiSettings />
+        <ApiSettings status={providerStatus} />
       </TabsContent>
       <TabsContent value="notifications">
         <NotificationSettings />
@@ -257,13 +267,28 @@ function BillingSettings() {
   );
 }
 
-const apiKeys = [
-  { id: "openai", label: "OpenAI", masked: "sk-····················7Jf2", connected: true },
-  { id: "gemini", label: "Google Gemini", masked: "AIza····················x9Q", connected: true },
-  { id: "supabase", label: "Supabase", masked: "Not connected", connected: false },
-];
+function ApiSettings({ status }: { status: ProviderStatus }) {
+  const apiKeys = [
+    {
+      id: "openai",
+      label: "OpenAI",
+      connected: status.openai,
+      env: "OPENAI_API_KEY",
+    },
+    {
+      id: "gemini",
+      label: "Google Gemini",
+      connected: status.gemini,
+      env: "GEMINI_API_KEY",
+    },
+    {
+      id: "supabase",
+      label: "Supabase",
+      connected: status.supabase,
+      env: "NEXT_PUBLIC_SUPABASE_URL",
+    },
+  ];
 
-function ApiSettings() {
   return (
     <Card>
       <CardHeader>
@@ -271,8 +296,9 @@ function ApiSettings() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Connect your providers. V1 is frontend-only — these are placeholders
-          for the upcoming integration phase.
+          Status is read live from your environment. Add the matching key to{" "}
+          <code className="font-mono text-foreground">.env.local</code> and
+          restart to switch a provider from demo to live.
         </p>
         {apiKeys.map((key) => (
           <div
@@ -286,15 +312,15 @@ function ApiSettings() {
               <div>
                 <p className="text-sm font-medium">{key.label}</p>
                 <p className="font-mono text-xs text-muted-foreground">
-                  {key.masked}
+                  {key.env}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               {key.connected ? (
-                <Badge variant="success">Connected</Badge>
+                <Badge variant="success">Live</Badge>
               ) : (
-                <Badge variant="muted">Inactive</Badge>
+                <Badge variant="muted">Demo</Badge>
               )}
               <Button variant="outline" size="sm">
                 {key.connected ? "Rotate" : "Connect"}

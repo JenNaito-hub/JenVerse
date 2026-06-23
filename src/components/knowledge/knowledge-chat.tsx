@@ -34,7 +34,11 @@ import {
 import { currentUser } from "@/data/team";
 import { getInitials } from "@/lib/utils";
 
-export function KnowledgeChat() {
+export function KnowledgeChat({
+  initialPrompt = "",
+}: {
+  initialPrompt?: string;
+}) {
   const [conversations, setConversations] = useState<KnowledgeConversation[]>(
     knowledgeConversations
   );
@@ -42,7 +46,7 @@ export function KnowledgeChat() {
     knowledgeConversations[0]?.id ?? null
   );
   const [model, setModel] = useState<string>(AI_MODELS.knowledge[0].id);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialPrompt);
   const [sending, setSending] = useState(false);
 
   const active = conversations.find((c) => c.id === activeId) ?? null;

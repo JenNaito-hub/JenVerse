@@ -59,7 +59,7 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
       </div>
 
-      <Link href="/projects" className="mt-4 flex-1">
+      <Link href={`/projects/${project.id}`} className="mt-4 flex-1">
         <h3 className="font-semibold tracking-tight transition-colors group-hover:text-foreground">
           {project.name}
         </h3>

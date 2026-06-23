@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Search, Plus, LogOut, User, Settings } from "lucide-react";
+import {
+  Bell,
+  Search,
+  Plus,
+  LogOut,
+  User,
+  Settings,
+  BrainCircuit,
+  ImageIcon,
+} from "lucide-react";
 
 import { currentUser } from "@/data/team";
 import { getInitials } from "@/lib/utils";
@@ -34,10 +43,28 @@ export function Topbar() {
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
-        <Button variant="primary" size="sm" className="hidden sm:inline-flex">
-          <Plus className="h-4 w-4" />
-          New generation
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="primary" size="sm" className="hidden sm:inline-flex">
+              <Plus className="h-4 w-4" />
+              New generation
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem asChild>
+              <Link href="/knowledge">
+                <BrainCircuit className="h-4 w-4" />
+                Knowledge AI
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/image">
+                <ImageIcon className="h-4 w-4" />
+                Image AI
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Button
           variant="ghost"

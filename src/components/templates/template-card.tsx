@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   BrainCircuit,
   ImageIcon,
@@ -119,9 +120,13 @@ export function TemplateCard({ template }: { template: Template }) {
               )}
               {copied ? "Copied" : "Copy prompt"}
             </Button>
-            <Button variant="primary">
-              <Sparkles className="h-4 w-4" />
-              Use in {isImage ? "Image AI" : "Knowledge AI"}
+            <Button variant="primary" asChild>
+              <Link
+                href={`${isImage ? "/image" : "/knowledge"}?prompt=${encodeURIComponent(template.prompt)}`}
+              >
+                <Sparkles className="h-4 w-4" />
+                Use in {isImage ? "Image AI" : "Knowledge AI"}
+              </Link>
             </Button>
           </DialogFooter>
         </DialogContent>

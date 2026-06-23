@@ -44,12 +44,14 @@ interface ActiveWorkflow {
 
 export function ImageStudio({
   activeWorkflow,
+  initialPrompt = "",
 }: {
   activeWorkflow?: ActiveWorkflow;
+  initialPrompt?: string;
 }) {
   const [images, setImages] = useState<GeneratedImage[]>(generatedImages);
   const [mode, setMode] = useState<GenMode>(activeWorkflow?.mode ?? "text");
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(initialPrompt);
   const [model, setModel] = useState<string>(
     activeWorkflow?.modelId ?? AI_MODELS.image[0].id
   );

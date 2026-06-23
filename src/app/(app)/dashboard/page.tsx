@@ -41,9 +41,11 @@ export default function DashboardPage() {
         title={`Welcome back, ${currentUser.name.split(" ")[0]}`}
         description="Here's what's happening across your workspace today."
       >
-        <Button variant="primary">
-          <Sparkles className="h-4 w-4" />
-          New generation
+        <Button variant="primary" asChild>
+          <Link href="/image">
+            <Sparkles className="h-4 w-4" />
+            New generation
+          </Link>
         </Button>
       </PageHeader>
 

@@ -116,6 +116,11 @@ export async function getProjects(): Promise<Project[]> {
   }
 }
 
+export async function getProjectById(id: string): Promise<Project | null> {
+  const all = await getProjects();
+  return all.find((p) => p.id === id) ?? null;
+}
+
 export async function getKnowledgeConversations(): Promise<
   KnowledgeConversation[]
 > {

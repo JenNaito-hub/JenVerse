@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Image AI" };
 export default async function ImagePage({
   searchParams,
 }: {
-  searchParams: { workflow?: string };
+  searchParams: { workflow?: string; prompt?: string };
 }) {
   const workflow = searchParams.workflow
     ? await getWorkflowById(searchParams.workflow)
@@ -45,7 +45,10 @@ export default async function ImagePage({
         title="Image AI"
         description="Generate premium, on-brand visuals from a single prompt."
       />
-      <ImageStudio activeWorkflow={activeWorkflow} />
+      <ImageStudio
+        activeWorkflow={activeWorkflow}
+        initialPrompt={searchParams.prompt ?? ""}
+      />
     </div>
   );
 }
