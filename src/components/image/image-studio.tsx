@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Sparkles, Heart, Download, Wand2, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, Heart, Download, Wand2, Loader2, Workflow, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AI_MODELS } from "@/lib/constants";
@@ -21,10 +22,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function ImageStudio() {
+interface ActiveWorkflow {
+  id: string;
+  name: string;
+  modelId?: string;
+}
+
+export function ImageStudio({
+  activeWorkflow,
+}: {
+  activeWorkflow?: ActiveWorkflow;
+}) {
   const [images, setImages] = useState<GeneratedImage[]>(generatedImages);
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState<string>(AI_MODELS.image[0].id);
+  const [model, setModel] = useState<string>(
+    activeWorkflow?.modelId ?? AI_MODELS.image[0].id
+  );
   const [style, setStyle] = useState(imageStyles[0]);
   const [ratio, setRatio] = useState(aspectRatios[0]);
   const [loading, setLoading] = useState(false);
@@ -71,9 +84,34 @@ export function ImageStudio() {
     );
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
-      {/* Composer */}
-      <Card className="h-fit p-5 lg:sticky lg:top-24">
+    <div className="space-y-4">
+      {activeWorkflow && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-foreground bg-foreground px-4 py-3 text-background">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-foreground">
+              <Workflow className="h-4 w-4" />
+            </span>
+            <div className="text-sm">
+              <span className="text-background/60">Running workflow</span>{" "}
+              <span className="font-semibold">{activeWorkflow.name}</span>
+              <span className="ml-2 text-background/60">
+                — model & settings pre-applied
+              </span>
+            </div>
+          </div>
+          <Link
+            href="/image"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-background/70 transition-colors hover:bg-background/10 hover:text-background"
+            aria-label="Clear workflow"
+          >
+            <X className="h-4 w-4" />
+          </Link>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
+        {/* Composer */}
+        <Card className="h-fit p-5 lg:sticky lg:top-24">
         <div className="mb-4 flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-primary">
             <Wand2 className="h-4 w-4" />
@@ -182,6 +220,7 @@ export function ImageStudio() {
             <GalleryTile key={img.id} image={img} onLike={toggleLike} />
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

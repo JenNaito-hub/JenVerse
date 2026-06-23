@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Workflow as WorkflowIcon, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { workflows as seedWorkflows, workflowCategories } from "@/data/workflows";
+import { workflowCategories } from "@/data/workflows";
 import type { Workflow } from "@/types";
 import { WorkflowCard } from "./workflow-card";
 import { ImportWorkflowDialog } from "./import-workflow-dialog";
@@ -12,8 +12,12 @@ import { VersionHistoryDialog } from "./version-history-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
 
-export function WorkflowsView() {
-  const [workflows, setWorkflows] = useState<Workflow[]>(seedWorkflows);
+export function WorkflowsView({
+  initialWorkflows,
+}: {
+  initialWorkflows: Workflow[];
+}) {
+  const [workflows, setWorkflows] = useState<Workflow[]>(initialWorkflows);
   const [category, setCategory] = useState<string>("All");
   const [query, setQuery] = useState("");
   const [versionId, setVersionId] = useState<string | null>(null);

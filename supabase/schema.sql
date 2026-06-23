@@ -39,6 +39,23 @@ create table if not exists public.history (
   created_at timestamptz default now()
 );
 
+-- ── Workflows (reusable generation pipelines) ────────────────────────────────
+create table if not exists public.workflows (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  name text not null,
+  description text,
+  category text not null default 'Generation',
+  color text default '#D7F205',
+  tags text[] default '{}',
+  current_version text not null default '1.0.0',
+  versions jsonb not null default '[]',
+  runs int default 0,
+  favorite boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- ── Conversations + messages ─────────────────────────────────────────────────
 create table if not exists public.conversations (
   id uuid primary key default gen_random_uuid(),
@@ -61,6 +78,7 @@ create table if not exists public.messages (
 alter table public.profiles enable row level security;
 alter table public.projects enable row level security;
 alter table public.history enable row level security;
+alter table public.workflows enable row level security;
 alter table public.conversations enable row level security;
 alter table public.messages enable row level security;
 
@@ -72,6 +90,9 @@ create policy "Projects are owned"
 
 create policy "History is owned"
   on public.history for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "Workflows are owned"
+  on public.workflows for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "Conversations are owned"
   on public.conversations for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

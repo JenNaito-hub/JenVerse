@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   FileInput,
   Box,
@@ -109,7 +110,12 @@ export function WorkflowCard({
 
       <div className="mt-4">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold tracking-tight">{workflow.name}</h3>
+          <Link
+            href={`/workflows/${workflow.id}`}
+            className="font-semibold tracking-tight hover:underline"
+          >
+            {workflow.name}
+          </Link>
           <Badge variant="secondary">{workflow.category}</Badge>
         </div>
         <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
@@ -144,10 +150,10 @@ export function WorkflowCard({
           {formatRelativeTime(workflow.updatedAt)}
         </span>
         <Button variant="ghost" size="sm" asChild>
-          <a href="/image">
+          <Link href={`/image?workflow=${workflow.id}`}>
             <Play className="h-4 w-4" />
             Run
-          </a>
+          </Link>
         </Button>
       </div>
     </Card>
