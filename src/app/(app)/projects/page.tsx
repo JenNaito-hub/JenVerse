@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shared/page-header";
-import {
-  ProjectsView,
-  NewProjectDialog,
-} from "@/components/projects/projects-view";
+import { ProjectsView } from "@/components/projects/projects-view";
 import { getProjects } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Projects" };
@@ -17,9 +14,7 @@ export default async function ProjectsPage() {
       <PageHeader
         title="Projects"
         description="Organize generations, assets and collaborators by workspace."
-      >
-        <NewProjectDialog />
-      </PageHeader>
+      />
       <ProjectsView projects={projects} />
     </div>
   );

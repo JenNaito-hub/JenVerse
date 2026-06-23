@@ -29,6 +29,13 @@ import {
 import { signOut } from "@/lib/auth/actions";
 import { MobileNav } from "./mobile-nav";
 
+const notifications = [
+  { id: "n1", title: "Mara generated 6 images in Nova Campaign", time: "5m ago" },
+  { id: "n2", title: "Your “Helio Research Digest” brief is ready", time: "1h ago" },
+  { id: "n3", title: "Theo added 12 sources to Atlas Knowledge Base", time: "3h ago" },
+  { id: "n4", title: "You’re at 77% of monthly credits", time: "Yesterday" },
+];
+
 export function Topbar() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md lg:px-8">
@@ -66,15 +73,41 @@ export function Topbar() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative rounded-full"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative rounded-full"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel className="flex items-center justify-between text-sm font-semibold text-foreground">
+              Notifications
+              <Badge variant="primary" className="h-5">
+                {notifications.length} new
+              </Badge>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {notifications.map((n) => (
+              <DropdownMenuItem
+                key={n.id}
+                className="flex flex-col items-start gap-0.5 py-2.5"
+              >
+                <span className="text-sm font-medium">{n.title}</span>
+                <span className="text-xs text-muted-foreground">{n.time}</span>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="justify-center text-sm text-muted-foreground">
+              View all activity
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

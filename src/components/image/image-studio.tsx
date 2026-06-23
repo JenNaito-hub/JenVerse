@@ -407,6 +407,16 @@ function GalleryTile({
               />
             </button>
             <button
+              onClick={() => {
+                const a = document.createElement("a");
+                a.href = image.url;
+                a.download = `jenverse-${image.id}.png`;
+                a.target = "_blank";
+                a.rel = "noopener";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+              }}
               className="flex h-7 w-7 items-center justify-center rounded-full bg-background/90 text-foreground transition-colors hover:bg-background"
               aria-label="Download"
             >

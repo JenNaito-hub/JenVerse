@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FolderKanban, Plus, Search } from "lucide-react";
 
 import type { Project, ProjectStatus } from "@/types";
+import { teamMembers } from "@/data/team";
 import { ProjectCard } from "./project-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
@@ -21,16 +22,43 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 type Filter = "all" | ProjectStatus;
 
-export function ProjectsView({ projects }: { projects: Project[] }) {
+const NEW_PROJECT_COLORS = [
+  "#D7F205",
+  "#7C9EFF",
+  "#FF9F7C",
+  "#C77CFF",
+  "#7CFFD4",
+  "#FF7CA8",
+];
+
+export function ProjectsView({ projects: initial }: { projects: Project[] }) {
+  const [projects, setProjects] = useState<Project[]>(initial);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+
+  const handleCreate = (name: string, description: string) => {
+    const newProject: Project = {
+      id: `p-${Date.now()}`,
+      name,
+      description: description || "No description yet.",
+      status: "draft",
+      color:
+        NEW_PROJECT_COLORS[
+          Math.floor(Math.random() * NEW_PROJECT_COLORS.length)
+        ],
+      assets: 0,
+      members: teamMembers.slice(0, 2),
+      updatedAt: new Date().toISOString(),
+      progress: 0,
+    };
+    setProjects((prev) => [newProject, ...prev]);
+  };
 
   const filtered = projects.filter((p) => {
     const matchesFilter = filter === "all" || p.status === filter;
@@ -52,14 +80,19 @@ export function ProjectsView({ projects }: { projects: Project[] }) {
           </TabsList>
         </Tabs>
 
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search projects…"
-            className="pl-10"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search projects…"
+              className="pl-10"
+            />
+          </div>
+          <div className="hidden sm:block">
+            <NewProjectDialog onCreate={handleCreate} />
+          </div>
         </div>
       </div>
 
@@ -69,7 +102,7 @@ export function ProjectsView({ projects }: { projects: Project[] }) {
           title="No projects found"
           description="Try a different filter or search term, or create a new project to get started."
         >
-          <NewProjectDialog />
+          <NewProjectDialog onCreate={handleCreate} />
         </EmptyState>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -82,9 +115,25 @@ export function ProjectsView({ projects }: { projects: Project[] }) {
   );
 }
 
-export function NewProjectDialog() {
+export function NewProjectDialog({
+  onCreate,
+}: {
+  onCreate?: (name: string, description: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+
+  const handleCreate = () => {
+    if (!name.trim()) return;
+    onCreate?.(name.trim(), description.trim());
+    setName("");
+    setDescription("");
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="primary">
           <Plus className="h-4 w-4" />
@@ -102,23 +151,34 @@ export function NewProjectDialog() {
         <div className="space-y-4 py-2">
           <div className="space-y-2">
             <Label htmlFor="project-name">Project name</Label>
-            <Input id="project-name" placeholder="e.g. Spring Campaign" />
+            <Input
+              id="project-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Spring Campaign"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="project-desc">Description</Label>
             <Textarea
               id="project-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this project about?"
             />
           </div>
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <DialogClose asChild>
-            <Button variant="primary">Create project</Button>
-          </DialogClose>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleCreate}
+            disabled={!name.trim()}
+          >
+            Create project
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
