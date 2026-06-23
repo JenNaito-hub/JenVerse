@@ -18,6 +18,8 @@ export const AI_MODELS = {
   ],
   image: [
     { id: "dall-e-3", label: "DALL·E 3", provider: "OpenAI" },
+    { id: "gpt-image-5-5", label: "ChatGPT Image 5.5", provider: "OpenAI" },
     { id: "imagen-3", label: "Imagen 3", provider: "Google" },
+    { id: "nano-banana-2", label: "Banana 2.0", provider: "Google" },
   ],
 } as const;

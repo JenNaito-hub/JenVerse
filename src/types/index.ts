@@ -91,3 +91,24 @@ export interface UsagePoint {
   knowledge: number;
   image: number;
 }
+
+export type TemplateCategory =
+  | "Marketing"
+  | "Content"
+  | "Social"
+  | "Design"
+  | "Research"
+  | "Support"
+  | "Product";
+
+export interface Template {
+  id: string;
+  title: string;
+  description: string;
+  category: TemplateCategory;
+  type: GenerationType;
+  prompt: string;
+  color: string;
+  uses: number;
+  featured?: boolean;
+}

@@ -2,6 +2,7 @@ import {
   LayoutDashboard,
   BrainCircuit,
   ImageIcon,
+  LayoutTemplate,
   FolderKanban,
   History,
   Settings,
@@ -12,6 +13,7 @@ export const mainNav: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Knowledge AI", href: "/knowledge", icon: BrainCircuit },
   { title: "Image AI", href: "/image", icon: ImageIcon },
+  { title: "Templates", href: "/templates", icon: LayoutTemplate, badge: "New" },
   { title: "Projects", href: "/projects", icon: FolderKanban, badge: "8" },
   { title: "History", href: "/history", icon: History },
 ];
