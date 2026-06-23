@@ -9,6 +9,7 @@ const PROTECTED_PREFIXES = [
   "/knowledge",
   "/image",
   "/templates",
+  "/workflows",
   "/projects",
   "/history",
   "/settings",

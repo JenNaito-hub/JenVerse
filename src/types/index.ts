@@ -112,3 +112,44 @@ export interface Template {
   uses: number;
   featured?: boolean;
 }
+
+export type WorkflowCategory =
+  | "Generation"
+  | "Editing"
+  | "Consistency"
+  | "Commercial";
+
+export type WorkflowStepType =
+  | "input"
+  | "model"
+  | "processor"
+  | "control"
+  | "output";
+
+export interface WorkflowStep {
+  id: string;
+  type: WorkflowStepType;
+  label: string;
+  config?: Record<string, string | number | boolean>;
+}
+
+export interface WorkflowVersion {
+  version: string;
+  createdAt: string;
+  note: string;
+  steps: WorkflowStep[];
+}
+
+export interface Workflow {
+  id: string;
+  name: string;
+  description: string;
+  category: WorkflowCategory;
+  color: string;
+  tags: string[];
+  currentVersion: string;
+  versions: WorkflowVersion[];
+  runs: number;
+  updatedAt: string;
+  favorite?: boolean;
+}
