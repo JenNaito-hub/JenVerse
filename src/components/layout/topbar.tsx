@@ -27,6 +27,7 @@ import {
 import { signOut } from "@/lib/auth/actions";
 import { MobileNav } from "./mobile-nav";
 import { GlobalSearch } from "./global-search";
+import { ThemeToggle } from "./theme-toggle";
 
 const notifications = [
   { id: "n1", title: "Mara generated 6 images in Nova Campaign", time: "5m ago" },
@@ -67,6 +68,8 @@ export function Topbar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <ThemeToggle />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

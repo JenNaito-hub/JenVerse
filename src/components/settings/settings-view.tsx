@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import {
   User,
   Building2,
@@ -8,9 +9,15 @@ import {
   KeyRound,
   Bell,
   Check,
+  Palette,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { currentUser } from "@/data/team";
+import { toast } from "@/components/ui/toast";
 import { getInitials } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,6 +63,10 @@ export function SettingsView({
           <Bell className="mr-1.5 h-4 w-4" />
           Notifications
         </TabsTrigger>
+        <TabsTrigger value="appearance">
+          <Palette className="mr-1.5 h-4 w-4" />
+          Appearance
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile">
@@ -73,7 +84,64 @@ export function SettingsView({
       <TabsContent value="notifications">
         <NotificationSettings />
       </TabsContent>
+      <TabsContent value="appearance">
+        <AppearanceSettings />
+      </TabsContent>
     </Tabs>
+  );
+}
+
+const themeOptions = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Monitor },
+] as const;
+
+function AppearanceSettings() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Appearance</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <p className="mb-1 text-sm font-medium">Theme</p>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Choose how JENVERSE looks. System follows your device setting.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {themeOptions.map((o) => {
+              const active = mounted && theme === o.value;
+              return (
+                <button
+                  key={o.value}
+                  onClick={() => {
+                    setTheme(o.value);
+                    toast(`${o.label} theme applied`);
+                  }}
+                  className={cn(
+                    "flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-colors",
+                    active
+                      ? "border-foreground ring-1 ring-foreground"
+                      : "border-border hover:bg-secondary"
+                  )}
+                >
+                  <span className="flex w-full items-center justify-between">
+                    <o.icon className="h-5 w-5" />
+                    {active && <Check className="h-4 w-4 text-primary" />}
+                  </span>
+                  <span className="text-sm font-medium">{o.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -123,7 +191,9 @@ function ProfileSettings() {
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="outline">Cancel</Button>
-          <Button variant="primary">Save changes</Button>
+          <Button variant="primary" onClick={() => toast("Profile saved")}>
+            Save changes
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -177,7 +247,9 @@ function WorkspaceSettings() {
           </div>
         </div>
         <div className="flex justify-end">
-          <Button variant="primary">Save workspace</Button>
+          <Button variant="primary" onClick={() => toast("Workspace saved")}>
+            Save workspace
+          </Button>
         </div>
       </CardContent>
     </Card>
