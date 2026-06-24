@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { formatRelativeTime, formatNumber } from "@/lib/utils";
+import { toast } from "@/components/ui/toast";
 import type { GenerationType, HistoryItem } from "@/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,8 +46,10 @@ export function HistoryView({ items }: { items: HistoryItem[] }) {
     return matchesFilter && matchesQuery;
   });
 
-  const handleDelete = (id: string) =>
+  const handleDelete = (id: string) => {
     setData((prev) => prev.filter((item) => item.id !== id));
+    toast("Item deleted");
+  };
 
   const handleExport = () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -60,6 +63,7 @@ export function HistoryView({ items }: { items: HistoryItem[] }) {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+    toast("History exported");
   };
 
   return (
@@ -180,7 +184,10 @@ function HistoryRow({
             Open
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => navigator.clipboard?.writeText(item.prompt)}
+            onClick={() => {
+              navigator.clipboard?.writeText(item.prompt);
+              toast("Prompt copied");
+            }}
           >
             <Copy className="h-4 w-4" />
             Copy prompt

@@ -11,6 +11,7 @@ import { ImportWorkflowDialog } from "./import-workflow-dialog";
 import { VersionHistoryDialog } from "./version-history-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/toast";
 
 export function WorkflowsView({
   initialWorkflows,
@@ -33,6 +34,7 @@ export function WorkflowsView({
 
   const handleImport = (workflow: Workflow) => {
     setWorkflows((prev) => [workflow, ...prev]);
+    toast(`Imported “${workflow.name}”`);
   };
 
   const handleDuplicate = (id: string) => {
@@ -52,6 +54,7 @@ export function WorkflowsView({
       next.splice(index + 1, 0, copy);
       return next;
     });
+    toast(`Duplicated “${source.name}”`);
   };
 
   const handleExport = (id: string) => {
@@ -68,6 +71,7 @@ export function WorkflowsView({
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+    toast(`Exported “${workflow.name}.json”`);
   };
 
   const handleRestore = (workflowId: string, version: string) => {

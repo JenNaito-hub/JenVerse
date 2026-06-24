@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {
   Bell,
-  Search,
   Plus,
   LogOut,
   User,
@@ -15,7 +14,6 @@ import {
 import { currentUser } from "@/data/team";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "@/lib/auth/actions";
 import { MobileNav } from "./mobile-nav";
+import { GlobalSearch } from "./global-search";
 
 const notifications = [
   { id: "n1", title: "Mara generated 6 images in Nova Campaign", time: "5m ago" },
@@ -41,12 +40,8 @@ export function Topbar() {
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md lg:px-8">
       <MobileNav />
 
-      <div className="relative hidden flex-1 md:block md:max-w-md">
-        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search projects, prompts, images…"
-          className="h-10 rounded-full border-transparent bg-secondary pl-10"
-        />
+      <div className="hidden flex-1 md:block md:max-w-md">
+        <GlobalSearch />
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">

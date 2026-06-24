@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { formatCompact } from "@/lib/utils";
+import { toast } from "@/components/ui/toast";
 import type { Template } from "@/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ export function TemplateCard({ template }: { template: Template }) {
     try {
       await navigator.clipboard.writeText(template.prompt);
       setCopied(true);
+      toast("Prompt copied to clipboard");
       setTimeout(() => setCopied(false), 1600);
     } catch {
       // Clipboard may be unavailable; no-op in V1 mock.

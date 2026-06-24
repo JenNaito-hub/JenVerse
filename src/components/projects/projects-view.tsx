@@ -5,6 +5,7 @@ import { FolderKanban, Plus, Search } from "lucide-react";
 
 import type { Project, ProjectStatus } from "@/types";
 import { teamMembers } from "@/data/team";
+import { toast } from "@/components/ui/toast";
 import { ProjectCard } from "./project-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,7 @@ export function ProjectsView({ projects: initial }: { projects: Project[] }) {
       progress: 0,
     };
     setProjects((prev) => [newProject, ...prev]);
+    toast(`Project “${name}” created`);
   };
 
   const filtered = projects.filter((p) => {

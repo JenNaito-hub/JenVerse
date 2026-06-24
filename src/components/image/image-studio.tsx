@@ -21,6 +21,7 @@ import { AI_MODELS } from "@/lib/constants";
 import { generatedImages, imageStyles, aspectRatios } from "@/data/images";
 import type { GeneratedImage } from "@/types";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -416,6 +417,7 @@ function GalleryTile({
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
+                toast("Image download started");
               }}
               className="flex h-7 w-7 items-center justify-center rounded-full bg-background/90 text-foreground transition-colors hover:bg-background"
               aria-label="Download"

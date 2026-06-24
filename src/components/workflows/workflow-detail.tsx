@@ -34,6 +34,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/toast";
 import {
   Select,
   SelectContent,
@@ -123,6 +124,7 @@ export function WorkflowDetail({ workflow }: { workflow: Workflow }) {
     setVersions((prev) => [version, ...prev]);
     setCurrentVersion(newVersion);
     setEditing(false);
+    toast(`Saved version v${newVersion}`);
   };
 
   const handleExport = () => {
@@ -138,6 +140,7 @@ export function WorkflowDetail({ workflow }: { workflow: Workflow }) {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+    toast(`Exported “${workflow.name}.json”`);
   };
 
   return (
