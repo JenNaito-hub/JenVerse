@@ -58,7 +58,9 @@ export async function generateKnowledge(
     if (provider === "gemini") {
       const { GoogleGenerativeAI } = await import("@google/generative-ai");
       const genAI = new GoogleGenerativeAI(env.geminiKey);
-      const geminiModel = model.includes("gemini") ? model : "gemini-1.5-pro";
+      const geminiModel = model.includes("gemini")
+        ? model
+        : "gemini-2.0-flash";
       const generativeModel = genAI.getGenerativeModel({
         model: geminiModel,
         systemInstruction: SYSTEM_PROMPT,
@@ -74,6 +76,12 @@ export async function generateKnowledge(
     }
   } catch (error) {
     console.error("[knowledge] provider error, falling back to mock:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      content: `⚠️ The ${provider} request failed:\n\n\`${message}\`\n\nCheck that your API key is valid and the selected model is available to it.`,
+      provider: "mock",
+      model,
+    };
   }
 
   return { content: MOCK_REPLY, provider: "mock", model };

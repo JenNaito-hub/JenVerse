@@ -77,7 +77,7 @@ export async function generateImage(req: ImageRequest): Promise<ImageResult> {
       const genAI = new GoogleGenerativeAI(env.geminiKey);
       // Gemini's image-capable model returns inline image data.
       const generativeModel = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-2.0-flash-preview-image-generation",
       });
       const result = await generativeModel.generateContent(fullPrompt);
       const parts = result.response.candidates?.[0]?.content?.parts ?? [];

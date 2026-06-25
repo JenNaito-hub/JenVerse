@@ -14,7 +14,8 @@ export const AI_MODELS = {
   knowledge: [
     { id: "gpt-4o", label: "GPT-4o", provider: "OpenAI" },
     { id: "gpt-4o-mini", label: "GPT-4o mini", provider: "OpenAI" },
-    { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", provider: "Google" },
+    { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "Google" },
+    { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "Google" },
   ],
   image: [
     { id: "dall-e-3", label: "DALL·E 3", provider: "OpenAI" },
