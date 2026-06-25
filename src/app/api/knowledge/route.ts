@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { generateKnowledge } from "@/lib/ai/knowledge";
+import { streamKnowledge } from "@/lib/ai/knowledge";
 import { addHistoryItem } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -20,25 +20,45 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await generateKnowledge(messages, model ?? "gpt-4o");
+    const selectedModel = model ?? "gpt-4o";
 
-    // Best-effort persistence of the generation to history.
+    // Best-effort persistence of the prompt to history.
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     if (lastUser) {
       await addHistoryItem({
         type: "knowledge",
         title: lastUser.content.slice(0, 60),
         prompt: lastUser.content,
-        model: result.model,
+        model: selectedModel,
       });
     }
 
-    return NextResponse.json(result);
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          for await (const chunk of streamKnowledge(messages, selectedModel)) {
+            controller.enqueue(encoder.encode(chunk));
+          }
+        } catch (error) {
+          console.error("[api/knowledge] stream", error);
+          controller.enqueue(
+            encoder.encode("\n\n⚠️ The response stream was interrupted.")
+          );
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+      },
+    });
   } catch (error) {
     console.error("[api/knowledge]", error);
-    return NextResponse.json(
-      { error: "Failed to generate" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate" }, { status: 500 });
   }
 }

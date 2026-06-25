@@ -106,33 +106,64 @@ export function KnowledgeChat({
     setInput("");
     setSending(true);
 
-    let content =
-      "Sorry, something went wrong reaching the model. Please try again.";
+    const assistantId = `m-${Date.now() + 1}`;
+    let started = false;
+    let acc = "";
+
+    const appendChunk = (text: string) => {
+      acc += text;
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== active.id) return c;
+          if (!started) {
+            started = true;
+            return {
+              ...c,
+              messages: [
+                ...c.messages,
+                {
+                  id: assistantId,
+                  role: "assistant",
+                  content: acc,
+                  createdAt: new Date().toISOString(),
+                },
+              ],
+            };
+          }
+          return {
+            ...c,
+            messages: c.messages.map((m) =>
+              m.id === assistantId ? { ...m, content: acc } : m
+            ),
+          };
+        })
+      );
+    };
+
     try {
       const res = await fetch("/api/knowledge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: history, model }),
       });
-      const data = await res.json();
-      if (data?.content) content = data.content;
+      const reader = res.body?.getReader();
+      if (reader) {
+        const decoder = new TextDecoder();
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          appendChunk(decoder.decode(value, { stream: true }));
+        }
+      } else {
+        appendChunk(await res.text());
+      }
     } catch {
-      // Network error — keep the fallback message.
+      appendChunk(
+        "Sorry, something went wrong reaching the model. Please try again."
+      );
     }
 
-    const assistantMsg: ChatMessage = {
-      id: `m-${Date.now() + 1}`,
-      role: "assistant",
-      content,
-      createdAt: new Date().toISOString(),
-    };
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === active.id
-          ? { ...c, messages: [...c.messages, assistantMsg] }
-          : c
-      )
-    );
     setSending(false);
   };
 
@@ -242,7 +273,9 @@ export function KnowledgeChat({
                 {active.messages.map((m) => (
                   <MessageBubble key={m.id} message={m} />
                 ))}
-                {sending && <ThinkingBubble />}
+                {sending &&
+                  active.messages[active.messages.length - 1]?.role ===
+                    "user" && <ThinkingBubble />}
               </>
             ) : (
               <EmptyConversation onPick={(p) => setInput(p)} />

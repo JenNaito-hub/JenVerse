@@ -86,3 +86,61 @@ export async function generateKnowledge(
 
   return { content: MOCK_REPLY, provider: "mock", model };
 }
+
+/** Streaming variant — yields text chunks as the model produces them. */
+export async function* streamKnowledge(
+  messages: KnowledgeRequestMessage[],
+  model: string
+): AsyncGenerator<string> {
+  const provider = resolveProvider(model);
+
+  try {
+    if (provider === "openai") {
+      const { default: OpenAI } = await import("openai");
+      const client = new OpenAI({ apiKey: env.openaiKey });
+      const openaiModel = model.startsWith("gpt") ? model : "gpt-4o";
+      const stream = await client.chat.completions.create({
+        model: openaiModel,
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        stream: true,
+      });
+      for await (const part of stream) {
+        const delta = part.choices[0]?.delta?.content;
+        if (delta) yield delta;
+      }
+      return;
+    }
+
+    if (provider === "gemini") {
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(env.geminiKey);
+      const geminiModel = model.includes("gemini")
+        ? model
+        : "gemini-2.0-flash";
+      const generativeModel = genAI.getGenerativeModel({
+        model: geminiModel,
+        systemInstruction: SYSTEM_PROMPT,
+      });
+      const result = await generativeModel.generateContentStream(
+        messages
+          .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+          .join("\n\n")
+      );
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        if (text) yield text;
+      }
+      return;
+    }
+  } catch (error) {
+    console.error("[knowledge] stream error, falling back to mock:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    yield `⚠️ The ${provider} request failed:\n\n\`${message}\`\n\nCheck that your API key is valid and the selected model is available to it.`;
+    return;
+  }
+
+  // Mock: emit the demo reply in word-sized chunks.
+  for (const word of MOCK_REPLY.split(" ")) {
+    yield word + " ";
+  }
+}
