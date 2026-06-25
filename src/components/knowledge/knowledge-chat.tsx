@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrainCircuit,
   Plus,
@@ -34,6 +34,9 @@ import {
 } from "@/components/ui/select";
 import { currentUser } from "@/data/team";
 import { getInitials } from "@/lib/utils";
+import { Markdown } from "@/components/shared/markdown";
+
+const STORAGE_KEY = "jenverse:conversations";
 
 export function KnowledgeChat({
   initialPrompt = "",
@@ -50,6 +53,34 @@ export function KnowledgeChat({
   );
   const [model, setModel] = useState<string>(AI_MODELS.knowledge[0].id);
   const [input, setInput] = useState(initialPrompt);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Restore saved conversations from the browser on first load.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as KnowledgeConversation[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setConversations(parsed);
+          setActiveId(parsed[0].id);
+        }
+      }
+    } catch {
+      // Ignore malformed storage.
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persist whenever conversations change (after the initial hydrate).
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+    } catch {
+      // Storage may be full or unavailable; ignore.
+    }
+  }, [conversations, hydrated]);
   const [sending, setSending] = useState(false);
 
   const active = conversations.find((c) => c.id === activeId) ?? null;
@@ -279,13 +310,13 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       <div className={cn("max-w-[80%] space-y-2", isUser && "items-end")}>
         <div
           className={cn(
-            "whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed",
+            "rounded-2xl px-4 py-3 text-sm leading-relaxed",
             isUser
-              ? "bg-foreground text-background"
+              ? "whitespace-pre-wrap bg-foreground text-background"
               : "bg-secondary text-foreground"
           )}
         >
-          {message.content}
+          {isUser ? message.content : <Markdown content={message.content} />}
         </div>
         {!isUser && (
           <div className="flex items-center gap-1 px-1">
