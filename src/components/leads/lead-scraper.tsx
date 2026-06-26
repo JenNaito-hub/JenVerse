@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Download,
@@ -13,6 +13,8 @@ import {
   Flame,
   Snowflake,
   CloudSun,
+  Phone,
+  Copy,
 } from "lucide-react";
 
 import { cn, formatRelativeTime, getInitials } from "@/lib/utils";
@@ -58,6 +60,30 @@ export function LeadScraper({ aiConfigured }: { aiConfigured: boolean }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [hydrated, setHydrated] = useState(false);
+
+  // Restore the last scrape from the browser.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("jenverse:leads");
+      if (saved) {
+        const parsed = JSON.parse(saved) as Lead[];
+        if (Array.isArray(parsed)) setLeads(parsed);
+      }
+    } catch {
+      // ignore malformed storage
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem("jenverse:leads", JSON.stringify(leads));
+    } catch {
+      // ignore
+    }
+  }, [leads, hydrated]);
 
   const handleScrape = async () => {
     if (!url.trim() || loading) return;
@@ -71,7 +97,9 @@ export function LeadScraper({ aiConfigured }: { aiConfigured: boolean }) {
       const data = await res.json();
       if (Array.isArray(data?.leads)) {
         setLeads(data.leads);
-        toast(`Found ${data.leads.length} leads`);
+        toast(
+          `Found ${data.leads.length} leads${data.live ? " (live)" : " (demo)"}`
+        );
       }
     } catch {
       toast("Scrape failed — please try again");
@@ -99,6 +127,7 @@ export function LeadScraper({ aiConfigured }: { aiConfigured: boolean }) {
   const handleExport = () => {
     const headers = [
       "Tên",
+      "Số điện thoại",
       "Nội dung comment",
       "Từ khóa",
       "Phân loại",
@@ -107,6 +136,7 @@ export function LeadScraper({ aiConfigured }: { aiConfigured: boolean }) {
     ];
     const rows = leads.map((l) => [
       l.name,
+      l.phone ?? "",
       l.comment,
       l.keywords.join("; "),
       tempMeta[l.temperature].label,
@@ -258,6 +288,19 @@ export function LeadScraper({ aiConfigured }: { aiConfigured: boolean }) {
                     <p className="mt-0.5 text-sm text-muted-foreground">
                       {lead.comment}
                     </p>
+                    {lead.phone && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard?.writeText(lead.phone!);
+                          toast("Phone copied");
+                        }}
+                        className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-primary/25"
+                      >
+                        <Phone className="h-3 w-3" />
+                        {lead.phone}
+                        <Copy className="h-3 w-3 opacity-60" />
+                      </button>
+                    )}
                     {lead.keywords.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {lead.keywords.map((k) => (

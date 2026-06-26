@@ -163,6 +163,7 @@ export interface Lead {
   name: string;
   avatar: string;
   comment: string;
+  phone?: string;
   keywords: string[];
   temperature: LeadTemperature;
   source: LeadSource;

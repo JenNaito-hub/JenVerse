@@ -23,13 +23,13 @@ export const mockComments: RawComment[] = [
   { name: "Lan Phương", comment: "Đẹp đó nhưng hơi mắc", commentedAt: "2026-06-26T07:02:00Z" },
   { name: "Hoàng Nam", comment: "Mua ở đâu vậy ạ? cho mình địa chỉ shop", commentedAt: "2026-06-25T20:18:00Z" },
   { name: "Diệu Linh", comment: "Chất lượng ok không mọi người, ai dùng rồi review giúp", commentedAt: "2026-06-25T19:44:00Z" },
-  { name: "Tuấn Kiệt", comment: "Số điện thoại shop là gì để mình gọi đặt hàng", commentedAt: "2026-06-25T18:05:00Z" },
+  { name: "Tuấn Kiệt", comment: "Đặt hàng nha shop, sđt mình 0901 234 567 gọi mình nhé", commentedAt: "2026-06-25T18:05:00Z" },
   { name: "Mỹ Duyên", comment: "Wow màu này hợp gu mình ghê", commentedAt: "2026-06-25T17:20:00Z" },
   { name: "Đức Huy", comment: "Ship COD không shop, bao nhiêu tiền ship", commentedAt: "2026-06-25T16:33:00Z" },
-  { name: "Phương Thảo", comment: "Cho mình xin bảng giá với ạ, mình chốt luôn", commentedAt: "2026-06-25T15:10:00Z" },
+  { name: "Phương Thảo", comment: "Cho mình xin bảng giá với ạ, mình chốt luôn, liên hệ 0987654321", commentedAt: "2026-06-25T15:10:00Z" },
   { name: "Gia Bảo", comment: "Hóng review", commentedAt: "2026-06-25T14:02:00Z" },
   { name: "Khánh Vy", comment: "Đặt hàng kiểu gì vậy shop ơi, mình muốn mua gấp", commentedAt: "2026-06-25T12:48:00Z" },
-  { name: "Trọng Nghĩa", comment: "Để lại stk mình chuyển cọc nha shop", commentedAt: "2026-06-25T11:20:00Z" },
+  { name: "Trọng Nghĩa", comment: "Để lại stk mình chuyển cọc nha shop, sdt 0356.789.123", commentedAt: "2026-06-25T11:20:00Z" },
 ];
 
 export const sourceLabels: Record<LeadSource, string> = {
