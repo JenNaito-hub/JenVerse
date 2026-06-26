@@ -37,6 +37,17 @@ import {
 
 type GenMode = "text" | "image";
 
+/** Four distinct camera angles used to produce a varied text-to-image set. */
+const ANGLES = [
+  { label: "Front", suffix: "front-on hero composition, eye-level, centered" },
+  { label: "Side", suffix: "three-quarter side angle, dynamic perspective" },
+  { label: "Top-down", suffix: "top-down flat-lay composition, overhead view" },
+  {
+    label: "Close-up",
+    suffix: "extreme close-up detail, shallow depth of field",
+  },
+] as const;
+
 interface ActiveWorkflow {
   id: string;
   name: string;
@@ -77,26 +88,26 @@ export function ImageStudio({
     !loading &&
     (mode === "text" || sourceImage !== null);
 
-  const handleGenerate = async () => {
-    if (!canGenerate) return;
-    setLoading(true);
+  const pendingCount = loading ? (mode === "text" ? ANGLES.length : 1) : 0;
 
-    const label =
-      AI_MODELS.image.find((m) => m.id === model)?.label ?? "DALL·E 3";
-    // In image-to-image, echo the source as the mock fallback so the result
-    // visibly relates to the upload.
+  const generateOne = async (
+    finalPrompt: string,
+    label: string,
+    index: number
+  ): Promise<GeneratedImage> => {
     let url =
       mode === "image" && sourceImage
         ? sourceImage
-        : generatedImages[Math.floor(Math.random() * generatedImages.length)]
-            .url;
-
+        : generatedImages[
+            (index + Math.floor(Math.random() * generatedImages.length)) %
+              generatedImages.length
+          ].url;
     try {
       const res = await fetch("/api/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: prompt.trim(),
+          prompt: finalPrompt,
           model,
           aspectRatio: ratio,
           style,
@@ -110,17 +121,35 @@ export function ImageStudio({
     } catch {
       // Network error — keep the mock fallback image.
     }
-
-    const newImage: GeneratedImage = {
-      id: `img-${Date.now()}`,
-      prompt: prompt.trim(),
+    return {
+      id: `img-${Date.now()}-${index}`,
+      prompt: finalPrompt,
       url,
       model: label,
       aspectRatio: ratio,
       createdAt: new Date().toISOString(),
       liked: false,
     };
-    setImages((prev) => [newImage, ...prev]);
+  };
+
+  const handleGenerate = async () => {
+    if (!canGenerate) return;
+    setLoading(true);
+
+    const base = prompt.trim();
+    const label =
+      AI_MODELS.image.find((m) => m.id === model)?.label ?? "DALL·E 3";
+
+    // Text-to-image returns a 4-angle variation set; image-to-image returns one.
+    const jobs =
+      mode === "text"
+        ? ANGLES.map((a, i) =>
+            generateOne(`${base}, ${a.suffix}`, label, i)
+          )
+        : [generateOne(base, label, 0)];
+
+    const results = await Promise.all(jobs);
+    setImages((prev) => [...results, ...prev]);
     setLoading(false);
   };
 
@@ -341,10 +370,16 @@ export function ImageStudio({
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            {loading ? "Generating…" : "Generate"}
+            {loading
+              ? "Generating…"
+              : mode === "text"
+                ? "Generate 4 angles"
+                : "Generate"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Uses ~2 credits per image
+            {mode === "text"
+              ? "Creates a 4-angle set · ~8 credits"
+              : "Uses ~2 credits per image"}
           </p>
         </div>
       </Card>
@@ -356,9 +391,12 @@ export function ImageStudio({
           <Badge variant="muted">{images.length} images</Badge>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {loading && (
-            <div className="aspect-square animate-pulse rounded-2xl bg-muted shimmer" />
-          )}
+          {Array.from({ length: pendingCount }).map((_, i) => (
+            <div
+              key={`skeleton-${i}`}
+              className="aspect-square animate-pulse rounded-2xl bg-muted shimmer"
+            />
+          ))}
           {images.map((img) => (
             <GalleryTile key={img.id} image={img} onLike={toggleLike} />
           ))}
