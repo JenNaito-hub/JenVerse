@@ -4,6 +4,7 @@ import {
   ImageIcon,
   LayoutTemplate,
   Workflow,
+  Radar,
   FolderKanban,
   History,
   Settings,
@@ -15,7 +16,8 @@ export const mainNav: NavItem[] = [
   { title: "Knowledge AI", href: "/knowledge", icon: BrainCircuit },
   { title: "Image AI", href: "/image", icon: ImageIcon },
   { title: "Templates", href: "/templates", icon: LayoutTemplate },
-  { title: "Workflows", href: "/workflows", icon: Workflow, badge: "New" },
+  { title: "Workflows", href: "/workflows", icon: Workflow },
+  { title: "Lead Scraper", href: "/leads", icon: Radar, badge: "New" },
   { title: "Projects", href: "/projects", icon: FolderKanban, badge: "8" },
   { title: "History", href: "/history", icon: History },
 ];

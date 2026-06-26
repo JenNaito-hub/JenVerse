@@ -153,3 +153,18 @@ export interface Workflow {
   updatedAt: string;
   favorite?: boolean;
 }
+
+export type LeadSource = "facebook_post" | "facebook_group" | "tiktok_video";
+
+export type LeadTemperature = "hot" | "warm" | "cold";
+
+export interface Lead {
+  id: string;
+  name: string;
+  avatar: string;
+  comment: string;
+  keywords: string[];
+  temperature: LeadTemperature;
+  source: LeadSource;
+  commentedAt: string;
+}
