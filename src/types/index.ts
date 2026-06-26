@@ -169,3 +169,24 @@ export interface Lead {
   source: LeadSource;
   commentedAt: string;
 }
+
+export type ContentStatus = "ready" | "scheduled";
+
+export interface ContentPost {
+  id: string;
+  title: string;
+  content: string;
+  tags: string[];
+  status: ContentStatus;
+  scheduledAt?: string;
+  createdAt: string;
+}
+
+export interface ContentCampaignConfig {
+  topic: string;
+  style: string;
+  tone: string;
+  contentType: string;
+  cta: string;
+  count: number;
+}

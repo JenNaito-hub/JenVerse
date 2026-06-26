@@ -8,6 +8,7 @@ const PROTECTED_PREFIXES = [
   "/dashboard",
   "/knowledge",
   "/image",
+  "/content",
   "/templates",
   "/workflows",
   "/leads",
