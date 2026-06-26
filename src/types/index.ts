@@ -190,3 +190,22 @@ export interface ContentCampaignConfig {
   cta: string;
   count: number;
 }
+
+export type ChannelType = "Profile" | "Fanpage" | "Group";
+
+export interface Channel {
+  id: string;
+  name: string;
+  avatar: string;
+  type: ChannelType;
+  pending: number;
+  frequency: string;
+  active: boolean;
+}
+
+export interface ScheduledPost {
+  id: string;
+  time: string;
+  channelId: string;
+  title: string;
+}
