@@ -5,7 +5,6 @@ import {
   LayoutTemplate,
   Workflow,
   Radar,
-  FolderKanban,
   History,
   Settings,
 } from "lucide-react";
@@ -18,7 +17,6 @@ export const mainNav: NavItem[] = [
   { title: "Templates", href: "/templates", icon: LayoutTemplate },
   { title: "Workflows", href: "/workflows", icon: Workflow },
   { title: "Lead Scraper", href: "/leads", icon: Radar, badge: "New" },
-  { title: "Projects", href: "/projects", icon: FolderKanban, badge: "8" },
   { title: "History", href: "/history", icon: History },
 ];
 

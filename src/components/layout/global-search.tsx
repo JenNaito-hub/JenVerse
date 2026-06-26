@@ -4,7 +4,6 @@ import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Search,
-  FolderKanban,
   LayoutTemplate,
   Workflow,
   History as HistoryIcon,
@@ -14,7 +13,6 @@ import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { projects } from "@/data/projects";
 import { templates } from "@/data/templates";
 import { workflows } from "@/data/workflows";
 import { historyItems } from "@/data/history";
@@ -30,14 +28,6 @@ interface SearchResult {
 
 function buildIndex(): SearchResult[] {
   return [
-    ...projects.map((p) => ({
-      id: `p-${p.id}`,
-      group: "Projects",
-      title: p.name,
-      sub: p.description,
-      href: `/projects/${p.id}`,
-      icon: FolderKanban,
-    })),
     ...workflows.map((w) => ({
       id: `w-${w.id}`,
       group: "Workflows",

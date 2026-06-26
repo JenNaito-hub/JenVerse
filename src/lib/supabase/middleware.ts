@@ -11,7 +11,6 @@ const PROTECTED_PREFIXES = [
   "/templates",
   "/workflows",
   "/leads",
-  "/projects",
   "/history",
   "/settings",
 ];

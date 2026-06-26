@@ -1,9 +1,4 @@
-import {
-  BrainCircuit,
-  ImageIcon,
-  FolderKanban,
-  Sparkles,
-} from "lucide-react";
+import { BrainCircuit, ImageIcon, Radar, Sparkles } from "lucide-react";
 import type { StatCard, ActivityItem, UsagePoint } from "@/types";
 import { teamMembers } from "./team";
 
@@ -25,12 +20,12 @@ export const statCards: StatCard[] = [
     icon: ImageIcon,
   },
   {
-    id: "s-projects",
-    label: "Active projects",
-    value: "8",
-    change: 2.0,
+    id: "s-leads",
+    label: "Leads collected",
+    value: "1,042",
+    change: 18.4,
     trend: "up",
-    icon: FolderKanban,
+    icon: Radar,
   },
   {
     id: "s-credits",

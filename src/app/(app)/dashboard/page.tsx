@@ -6,11 +6,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { UsageChart } from "@/components/dashboard/usage-chart";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
-import { ProjectCard } from "@/components/projects/project-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { statCards } from "@/data/dashboard";
-import { projects } from "@/data/projects";
 import { currentUser } from "@/data/team";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -31,10 +29,6 @@ const quickActions = [
 ];
 
 export default function DashboardPage() {
-  const recentProjects = projects
-    .filter((p) => p.status === "active")
-    .slice(0, 3);
-
   return (
     <div className="space-y-8 animate-fade-in">
       <PageHeader
@@ -82,24 +76,6 @@ export default function DashboardPage() {
             </Card>
           </Link>
         ))}
-      </div>
-
-      {/* Recent projects */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Recent projects</h2>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/projects">
-              View all
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {recentProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
       </div>
     </div>
   );
