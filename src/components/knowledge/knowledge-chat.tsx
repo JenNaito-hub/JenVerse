@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrainCircuit,
   Plus,
@@ -9,6 +9,8 @@ import {
   Copy,
   ThumbsUp,
   RefreshCw,
+  Loader2,
+  Info,
 } from "lucide-react";
 
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -32,8 +34,17 @@ import {
 } from "@/components/ui/select";
 import { currentUser } from "@/data/team";
 import { getInitials } from "@/lib/utils";
+import { Markdown } from "@/components/shared/markdown";
 
-export function KnowledgeChat() {
+const STORAGE_KEY = "jenverse:conversations";
+
+export function KnowledgeChat({
+  initialPrompt = "",
+  demoMode = false,
+}: {
+  initialPrompt?: string;
+  demoMode?: boolean;
+}) {
   const [conversations, setConversations] = useState<KnowledgeConversation[]>(
     knowledgeConversations
   );
@@ -41,33 +52,119 @@ export function KnowledgeChat() {
     knowledgeConversations[0]?.id ?? null
   );
   const [model, setModel] = useState<string>(AI_MODELS.knowledge[0].id);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialPrompt);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Restore saved conversations from the browser on first load.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as KnowledgeConversation[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setConversations(parsed);
+          setActiveId(parsed[0].id);
+        }
+      }
+    } catch {
+      // Ignore malformed storage.
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persist whenever conversations change (after the initial hydrate).
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+    } catch {
+      // Storage may be full or unavailable; ignore.
+    }
+  }, [conversations, hydrated]);
+  const [sending, setSending] = useState(false);
 
   const active = conversations.find((c) => c.id === activeId) ?? null;
 
-  const handleSend = () => {
-    if (!input.trim() || !active) return;
+  const handleSend = async () => {
+    if (!input.trim() || !active || sending) return;
     const userMsg: ChatMessage = {
       id: `m-${Date.now()}`,
       role: "user",
       content: input.trim(),
       createdAt: new Date().toISOString(),
     };
-    const assistantMsg: ChatMessage = {
-      id: `m-${Date.now() + 1}`,
-      role: "assistant",
-      content:
-        "This is a preview response. In V1 the UI is wired with mock data — connect OpenAI or Gemini to stream a real answer here.",
-      createdAt: new Date().toISOString(),
-    };
+    const history = [...active.messages, userMsg].map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     setConversations((prev) =>
       prev.map((c) =>
-        c.id === active.id
-          ? { ...c, messages: [...c.messages, userMsg, assistantMsg] }
-          : c
+        c.id === active.id ? { ...c, messages: [...c.messages, userMsg] } : c
       )
     );
     setInput("");
+    setSending(true);
+
+    const assistantId = `m-${Date.now() + 1}`;
+    let started = false;
+    let acc = "";
+
+    const appendChunk = (text: string) => {
+      acc += text;
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== active.id) return c;
+          if (!started) {
+            started = true;
+            return {
+              ...c,
+              messages: [
+                ...c.messages,
+                {
+                  id: assistantId,
+                  role: "assistant",
+                  content: acc,
+                  createdAt: new Date().toISOString(),
+                },
+              ],
+            };
+          }
+          return {
+            ...c,
+            messages: c.messages.map((m) =>
+              m.id === assistantId ? { ...m, content: acc } : m
+            ),
+          };
+        })
+      );
+    };
+
+    try {
+      const res = await fetch("/api/knowledge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history, model }),
+      });
+      const reader = res.body?.getReader();
+      if (reader) {
+        const decoder = new TextDecoder();
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          appendChunk(decoder.decode(value, { stream: true }));
+        }
+      } else {
+        appendChunk(await res.text());
+      }
+    } catch {
+      appendChunk(
+        "Sorry, something went wrong reaching the model. Please try again."
+      );
+    }
+
+    setSending(false);
   };
 
   const startNew = () => {
@@ -85,7 +182,22 @@ export function KnowledgeChat() {
   };
 
   return (
-    <div className="grid h-[calc(100vh-9.5rem)] grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
+    <div className="space-y-3">
+      {demoMode && (
+        <div className="flex items-start gap-2.5 rounded-2xl border border-border bg-secondary/60 px-4 py-3 text-sm">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            <span className="font-medium text-foreground">Demo mode.</span> No
+            AI key is configured, so replies are sample text. Add{" "}
+            <code className="font-mono text-foreground">OPENAI_API_KEY</code> or{" "}
+            <code className="font-mono text-foreground">GEMINI_API_KEY</code> to{" "}
+            <code className="font-mono text-foreground">.env.local</code> to get
+            real answers.
+          </p>
+        </div>
+      )}
+
+      <div className="grid h-[calc(100vh-9.5rem)] grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
       {/* Conversation list */}
       <Card className="hidden flex-col overflow-hidden lg:flex">
         <div className="border-b border-border p-3">
@@ -157,13 +269,16 @@ export function KnowledgeChat() {
         <ScrollArea className="flex-1">
           <div className="mx-auto max-w-3xl space-y-6 p-5">
             {active && active.messages.length > 0 ? (
-              active.messages.map((m) => (
-                <MessageBubble key={m.id} message={m} />
-              ))
+              <>
+                {active.messages.map((m) => (
+                  <MessageBubble key={m.id} message={m} />
+                ))}
+                {sending &&
+                  active.messages[active.messages.length - 1]?.role ===
+                    "user" && <ThinkingBubble />}
+              </>
             ) : (
-              <EmptyConversation
-                onPick={(p) => setInput(p)}
-              />
+              <EmptyConversation onPick={(p) => setInput(p)} />
             )}
           </div>
         </ScrollArea>
@@ -192,16 +307,21 @@ export function KnowledgeChat() {
                   variant="primary"
                   size="sm"
                   onClick={handleSend}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || sending}
                 >
-                  <Send className="h-4 w-4" />
-                  Send
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {sending ? "Thinking…" : "Send"}
                 </Button>
               </div>
             </div>
           </div>
         </div>
       </Card>
+      </div>
     </div>
   );
 }
@@ -223,13 +343,13 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       <div className={cn("max-w-[80%] space-y-2", isUser && "items-end")}>
         <div
           className={cn(
-            "whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed",
+            "rounded-2xl px-4 py-3 text-sm leading-relaxed",
             isUser
-              ? "bg-foreground text-background"
+              ? "whitespace-pre-wrap bg-foreground text-background"
               : "bg-secondary text-foreground"
           )}
         >
-          {message.content}
+          {isUser ? message.content : <Markdown content={message.content} />}
         </div>
         {!isUser && (
           <div className="flex items-center gap-1 px-1">
@@ -244,6 +364,21 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             </Button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ThinkingBubble() {
+  return (
+    <div className="flex gap-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-primary">
+        <Sparkles className="h-4 w-4" />
+      </span>
+      <div className="flex items-center gap-1.5 rounded-2xl bg-secondary px-4 py-3.5">
+        <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground" />
       </div>
     </div>
   );

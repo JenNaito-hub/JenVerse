@@ -2,7 +2,12 @@ import {
   LayoutDashboard,
   BrainCircuit,
   ImageIcon,
-  FolderKanban,
+  Clapperboard,
+  PenLine,
+  CalendarClock,
+  LayoutTemplate,
+  Workflow,
+  Radar,
   History,
   Settings,
 } from "lucide-react";
@@ -12,7 +17,12 @@ export const mainNav: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Knowledge AI", href: "/knowledge", icon: BrainCircuit },
   { title: "Image AI", href: "/image", icon: ImageIcon },
-  { title: "Projects", href: "/projects", icon: FolderKanban, badge: "8" },
+  { title: "Video Studio", href: "/video", icon: Clapperboard, badge: "New" },
+  { title: "Content Studio", href: "/content", icon: PenLine, badge: "New" },
+  { title: "Schedule", href: "/schedule", icon: CalendarClock },
+  { title: "Templates", href: "/templates", icon: LayoutTemplate },
+  { title: "Workflows", href: "/workflows", icon: Workflow },
+  { title: "Lead Scraper", href: "/leads", icon: Radar, badge: "New" },
   { title: "History", href: "/history", icon: History },
 ];
 

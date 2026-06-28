@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Search, Plus, LogOut, User, Settings } from "lucide-react";
+import {
+  Bell,
+  Plus,
+  LogOut,
+  User,
+  Settings,
+  BrainCircuit,
+  ImageIcon,
+} from "lucide-react";
 
 import { currentUser } from "@/data/team";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,36 +24,88 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { signOut } from "@/lib/auth/actions";
 import { MobileNav } from "./mobile-nav";
+import { GlobalSearch } from "./global-search";
+import { ThemeToggle } from "./theme-toggle";
+
+const notifications = [
+  { id: "n1", title: "Mara generated 6 images in Nova Campaign", time: "5m ago" },
+  { id: "n2", title: "Your “Helio Research Digest” brief is ready", time: "1h ago" },
+  { id: "n3", title: "Theo added 12 sources to Atlas Knowledge Base", time: "3h ago" },
+  { id: "n4", title: "You’re at 77% of monthly credits", time: "Yesterday" },
+];
 
 export function Topbar() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md lg:px-8">
       <MobileNav />
 
-      <div className="relative hidden flex-1 md:block md:max-w-md">
-        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search projects, prompts, images…"
-          className="h-10 rounded-full border-transparent bg-secondary pl-10"
-        />
+      <div className="hidden flex-1 md:block md:max-w-md">
+        <GlobalSearch />
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
-        <Button variant="primary" size="sm" className="hidden sm:inline-flex">
-          <Plus className="h-4 w-4" />
-          New generation
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="primary" size="sm" className="hidden sm:inline-flex">
+              <Plus className="h-4 w-4" />
+              New generation
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem asChild>
+              <Link href="/knowledge">
+                <BrainCircuit className="h-4 w-4" />
+                Knowledge AI
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/image">
+                <ImageIcon className="h-4 w-4" />
+                Image AI
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative rounded-full"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
-        </Button>
+        <ThemeToggle />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative rounded-full"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel className="flex items-center justify-between text-sm font-semibold text-foreground">
+              Notifications
+              <Badge variant="primary" className="h-5">
+                {notifications.length} new
+              </Badge>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {notifications.map((n) => (
+              <DropdownMenuItem
+                key={n.id}
+                className="flex flex-col items-start gap-0.5 py-2.5"
+              >
+                <span className="text-sm font-medium">{n.title}</span>
+                <span className="text-xs text-muted-foreground">{n.time}</span>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="justify-center text-sm text-muted-foreground">
+              View all activity
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -94,10 +153,17 @@ export function Topbar() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </DropdownMenuItem>
+            <form action={signOut}>
+              <DropdownMenuItem asChild>
+                <button
+                  type="submit"
+                  className="w-full text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
+              </DropdownMenuItem>
+            </form>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

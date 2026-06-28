@@ -1,9 +1,4 @@
-import {
-  BrainCircuit,
-  ImageIcon,
-  FolderKanban,
-  Sparkles,
-} from "lucide-react";
+import { BrainCircuit, ImageIcon, Radar, Sparkles } from "lucide-react";
 import type { StatCard, ActivityItem, UsagePoint } from "@/types";
 import { teamMembers } from "./team";
 
@@ -25,12 +20,12 @@ export const statCards: StatCard[] = [
     icon: ImageIcon,
   },
   {
-    id: "s-projects",
-    label: "Active projects",
-    value: "8",
-    change: 2.0,
+    id: "s-leads",
+    label: "Leads collected",
+    value: "1,042",
+    change: 18.4,
     trend: "up",
-    icon: FolderKanban,
+    icon: Radar,
   },
   {
     id: "s-credits",
@@ -56,41 +51,41 @@ export const activityFeed: ActivityItem[] = [
   {
     id: "a-1",
     actor: teamMembers[1],
-    action: "generated 6 images in",
-    target: "Nova Campaign Visuals",
-    type: "image",
+    action: "tạo 12 bài viết trong",
+    target: "Content Studio",
+    type: "knowledge",
     createdAt: "2026-06-23T09:05:00Z",
   },
   {
     id: "a-2",
     actor: teamMembers[2],
-    action: "created a knowledge brief in",
-    target: "Atlas Knowledge Base",
-    type: "knowledge",
+    action: "thu 48 leads từ một video",
+    target: "TikTok",
+    type: "system",
     createdAt: "2026-06-23T08:32:00Z",
   },
   {
     id: "a-3",
     actor: teamMembers[0],
-    action: "started a new project",
-    target: "Pulse Social Kit",
-    type: "project",
+    action: "lên lịch 18 bài trên 6",
+    target: "kênh Facebook",
+    type: "system",
     createdAt: "2026-06-23T07:02:00Z",
   },
   {
     id: "a-4",
     actor: teamMembers[3],
-    action: "summarized 14 sources in",
-    target: "Helio Research Digest",
-    type: "knowledge",
+    action: "tạo bộ ảnh 4 góc trong",
+    target: "Image AI",
+    type: "image",
     createdAt: "2026-06-22T18:20:00Z",
   },
   {
     id: "a-5",
     actor: teamMembers[4],
-    action: "exported a social kit from",
-    target: "Pulse Social Kit",
-    type: "image",
+    action: "export 124 leads ra",
+    target: "Excel",
+    type: "system",
     createdAt: "2026-06-22T15:47:00Z",
   },
 ];

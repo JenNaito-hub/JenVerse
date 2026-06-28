@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import {
   User,
   Building2,
@@ -8,9 +9,15 @@ import {
   KeyRound,
   Bell,
   Check,
+  Palette,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { currentUser } from "@/data/team";
+import { toast } from "@/components/ui/toast";
 import { getInitials } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,7 +29,17 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function SettingsView() {
+export interface ProviderStatus {
+  openai: boolean;
+  gemini: boolean;
+  supabase: boolean;
+}
+
+export function SettingsView({
+  providerStatus,
+}: {
+  providerStatus: ProviderStatus;
+}) {
   return (
     <Tabs defaultValue="profile" className="space-y-6">
       <TabsList className="flex-wrap">
@@ -46,6 +63,10 @@ export function SettingsView() {
           <Bell className="mr-1.5 h-4 w-4" />
           Notifications
         </TabsTrigger>
+        <TabsTrigger value="appearance">
+          <Palette className="mr-1.5 h-4 w-4" />
+          Appearance
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile">
@@ -58,12 +79,69 @@ export function SettingsView() {
         <BillingSettings />
       </TabsContent>
       <TabsContent value="api">
-        <ApiSettings />
+        <ApiSettings status={providerStatus} />
       </TabsContent>
       <TabsContent value="notifications">
         <NotificationSettings />
       </TabsContent>
+      <TabsContent value="appearance">
+        <AppearanceSettings />
+      </TabsContent>
     </Tabs>
+  );
+}
+
+const themeOptions = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Monitor },
+] as const;
+
+function AppearanceSettings() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Appearance</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <p className="mb-1 text-sm font-medium">Theme</p>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Choose how JENVERSE looks. System follows your device setting.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {themeOptions.map((o) => {
+              const active = mounted && theme === o.value;
+              return (
+                <button
+                  key={o.value}
+                  onClick={() => {
+                    setTheme(o.value);
+                    toast(`${o.label} theme applied`);
+                  }}
+                  className={cn(
+                    "flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-colors",
+                    active
+                      ? "border-foreground ring-1 ring-foreground"
+                      : "border-border hover:bg-secondary"
+                  )}
+                >
+                  <span className="flex w-full items-center justify-between">
+                    <o.icon className="h-5 w-5" />
+                    {active && <Check className="h-4 w-4 text-primary" />}
+                  </span>
+                  <span className="text-sm font-medium">{o.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -113,7 +191,9 @@ function ProfileSettings() {
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="outline">Cancel</Button>
-          <Button variant="primary">Save changes</Button>
+          <Button variant="primary" onClick={() => toast("Profile saved")}>
+            Save changes
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -167,7 +247,9 @@ function WorkspaceSettings() {
           </div>
         </div>
         <div className="flex justify-end">
-          <Button variant="primary">Save workspace</Button>
+          <Button variant="primary" onClick={() => toast("Workspace saved")}>
+            Save workspace
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -257,13 +339,28 @@ function BillingSettings() {
   );
 }
 
-const apiKeys = [
-  { id: "openai", label: "OpenAI", masked: "sk-····················7Jf2", connected: true },
-  { id: "gemini", label: "Google Gemini", masked: "AIza····················x9Q", connected: true },
-  { id: "supabase", label: "Supabase", masked: "Not connected", connected: false },
-];
+function ApiSettings({ status }: { status: ProviderStatus }) {
+  const apiKeys = [
+    {
+      id: "openai",
+      label: "OpenAI",
+      connected: status.openai,
+      env: "OPENAI_API_KEY",
+    },
+    {
+      id: "gemini",
+      label: "Google Gemini",
+      connected: status.gemini,
+      env: "GEMINI_API_KEY",
+    },
+    {
+      id: "supabase",
+      label: "Supabase",
+      connected: status.supabase,
+      env: "NEXT_PUBLIC_SUPABASE_URL",
+    },
+  ];
 
-function ApiSettings() {
   return (
     <Card>
       <CardHeader>
@@ -271,8 +368,9 @@ function ApiSettings() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Connect your providers. V1 is frontend-only — these are placeholders
-          for the upcoming integration phase.
+          Status is read live from your environment. Add the matching key to{" "}
+          <code className="font-mono text-foreground">.env.local</code> and
+          restart to switch a provider from demo to live.
         </p>
         {apiKeys.map((key) => (
           <div
@@ -286,15 +384,15 @@ function ApiSettings() {
               <div>
                 <p className="text-sm font-medium">{key.label}</p>
                 <p className="font-mono text-xs text-muted-foreground">
-                  {key.masked}
+                  {key.env}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               {key.connected ? (
-                <Badge variant="success">Connected</Badge>
+                <Badge variant="success">Live</Badge>
               ) : (
-                <Badge variant="muted">Inactive</Badge>
+                <Badge variant="muted">Demo</Badge>
               )}
               <Button variant="outline" size="sm">
                 {key.connected ? "Rotate" : "Connect"}

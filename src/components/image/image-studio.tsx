@@ -1,18 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
-import { Sparkles, Heart, Download, Wand2, Loader2 } from "lucide-react";
+import Link from "next/link";
+import {
+  Sparkles,
+  Heart,
+  Download,
+  Wand2,
+  Loader2,
+  Workflow,
+  X,
+  ImageUp,
+  Trash2,
+  Info,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AI_MODELS } from "@/lib/constants";
 import { generatedImages, imageStyles, aspectRatios } from "@/data/images";
 import type { GeneratedImage } from "@/types";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -21,33 +35,122 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function ImageStudio() {
+type GenMode = "text" | "image";
+
+/** Four distinct camera angles used to produce a varied text-to-image set. */
+const ANGLES = [
+  { label: "Front", suffix: "front-on hero composition, eye-level, centered" },
+  { label: "Side", suffix: "three-quarter side angle, dynamic perspective" },
+  { label: "Top-down", suffix: "top-down flat-lay composition, overhead view" },
+  {
+    label: "Close-up",
+    suffix: "extreme close-up detail, shallow depth of field",
+  },
+] as const;
+
+interface ActiveWorkflow {
+  id: string;
+  name: string;
+  modelId?: string;
+  mode?: GenMode;
+}
+
+export function ImageStudio({
+  activeWorkflow,
+  initialPrompt = "",
+  demoMode = false,
+}: {
+  activeWorkflow?: ActiveWorkflow;
+  initialPrompt?: string;
+  demoMode?: boolean;
+}) {
   const [images, setImages] = useState<GeneratedImage[]>(generatedImages);
-  const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState<string>(AI_MODELS.image[0].id);
+  const [mode, setMode] = useState<GenMode>(activeWorkflow?.mode ?? "text");
+  const [prompt, setPrompt] = useState(initialPrompt);
+  const [model, setModel] = useState<string>(
+    activeWorkflow?.modelId ?? AI_MODELS.image[0].id
+  );
   const [style, setStyle] = useState(imageStyles[0]);
   const [ratio, setRatio] = useState(aspectRatios[0]);
+  const [sourceImage, setSourceImage] = useState<string | null>(null);
+  const [strength, setStrength] = useState(65);
   const [loading, setLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleGenerate = () => {
-    if (!prompt.trim()) return;
+  const handleSourceFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => setSourceImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const canGenerate =
+    prompt.trim().length > 0 &&
+    !loading &&
+    (mode === "text" || sourceImage !== null);
+
+  const pendingCount = loading ? (mode === "text" ? ANGLES.length : 1) : 0;
+
+  const generateOne = async (
+    finalPrompt: string,
+    label: string,
+    index: number
+  ): Promise<GeneratedImage> => {
+    let url =
+      mode === "image" && sourceImage
+        ? sourceImage
+        : generatedImages[
+            (index + Math.floor(Math.random() * generatedImages.length)) %
+              generatedImages.length
+          ].url;
+    try {
+      const res = await fetch("/api/image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: finalPrompt,
+          model,
+          aspectRatio: ratio,
+          style,
+          mode,
+          sourceImage: mode === "image" ? sourceImage : undefined,
+          strength,
+        }),
+      });
+      const data = await res.json();
+      if (data?.url) url = data.url;
+    } catch {
+      // Network error — keep the mock fallback image.
+    }
+    return {
+      id: `img-${Date.now()}-${index}`,
+      prompt: finalPrompt,
+      url,
+      model: label,
+      aspectRatio: ratio,
+      createdAt: new Date().toISOString(),
+      liked: false,
+    };
+  };
+
+  const handleGenerate = async () => {
+    if (!canGenerate) return;
     setLoading(true);
-    // Mock generation latency — V1 has no API wired.
-    setTimeout(() => {
-      const newImage: GeneratedImage = {
-        id: `img-${Date.now()}`,
-        prompt: prompt.trim(),
-        url: generatedImages[
-          Math.floor(Math.random() * generatedImages.length)
-        ].url,
-        model: AI_MODELS.image.find((m) => m.id === model)?.label ?? "DALL·E 3",
-        aspectRatio: ratio,
-        createdAt: new Date().toISOString(),
-        liked: false,
-      };
-      setImages((prev) => [newImage, ...prev]);
-      setLoading(false);
-    }, 1400);
+
+    const base = prompt.trim();
+    const label =
+      AI_MODELS.image.find((m) => m.id === model)?.label ?? "DALL·E 3";
+
+    // Text-to-image returns a 4-angle variation set; image-to-image returns one.
+    const jobs =
+      mode === "text"
+        ? ANGLES.map((a, i) =>
+            generateOne(`${base}, ${a.suffix}`, label, i)
+          )
+        : [generateOne(base, label, 0)];
+
+    const results = await Promise.all(jobs);
+    setImages((prev) => [...results, ...prev]);
+    setLoading(false);
   };
 
   const toggleLike = (id: string) =>
@@ -58,9 +161,49 @@ export function ImageStudio() {
     );
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
-      {/* Composer */}
-      <Card className="h-fit p-5 lg:sticky lg:top-24">
+    <div className="space-y-4">
+      {demoMode && (
+        <div className="flex items-start gap-2.5 rounded-2xl border border-border bg-secondary/60 px-4 py-3 text-sm">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            <span className="font-medium text-foreground">Demo mode.</span> No
+            AI key is configured, so Generate returns sample images instead of
+            drawing your prompt. Add{" "}
+            <code className="font-mono text-foreground">OPENAI_API_KEY</code> or{" "}
+            <code className="font-mono text-foreground">GEMINI_API_KEY</code> to{" "}
+            <code className="font-mono text-foreground">.env.local</code> and
+            restart to generate real images.
+          </p>
+        </div>
+      )}
+
+      {activeWorkflow && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-foreground bg-foreground px-4 py-3 text-background">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-foreground">
+              <Workflow className="h-4 w-4" />
+            </span>
+            <div className="text-sm">
+              <span className="text-background/60">Running workflow</span>{" "}
+              <span className="font-semibold">{activeWorkflow.name}</span>
+              <span className="ml-2 text-background/60">
+                — model & settings pre-applied
+              </span>
+            </div>
+          </div>
+          <Link
+            href="/image"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-background/70 transition-colors hover:bg-background/10 hover:text-background"
+            aria-label="Clear workflow"
+          >
+            <X className="h-4 w-4" />
+          </Link>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
+        {/* Composer */}
+        <Card className="h-fit p-5 lg:sticky lg:top-24">
         <div className="mb-4 flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-primary">
             <Wand2 className="h-4 w-4" />
@@ -69,16 +212,96 @@ export function ImageStudio() {
         </div>
 
         <div className="space-y-4">
+          <Tabs
+            value={mode}
+            onValueChange={(v) => setMode(v as GenMode)}
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="text">Text to Image</TabsTrigger>
+              <TabsTrigger value="image">Image to Image</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {mode === "image" && (
+            <div className="space-y-2">
+              <Label>Source image</Label>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleSourceFile(file);
+                }}
+              />
+              {sourceImage ? (
+                <div className="relative overflow-hidden rounded-xl border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={sourceImage}
+                    alt="Source"
+                    className="h-40 w-full object-cover"
+                  />
+                  <button
+                    onClick={() => setSourceImage(null)}
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-background/90 text-foreground transition-colors hover:bg-background"
+                    aria-label="Remove image"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-secondary/40 py-8 text-sm text-muted-foreground transition-colors hover:bg-secondary"
+                >
+                  <ImageUp className="h-6 w-6" />
+                  Upload a reference image
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="prompt">Prompt</Label>
+            <Label htmlFor="prompt">
+              {mode === "image" ? "Describe the changes" : "Prompt"}
+            </Label>
             <Textarea
               id="prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="A serene Scandinavian living room bathed in golden hour light, editorial photography…"
+              placeholder={
+                mode === "image"
+                  ? "Restyle as a cozy autumn scene, warm tones, soft light…"
+                  : "A serene Scandinavian living room bathed in golden hour light, editorial photography…"
+              }
               className="min-h-[110px]"
             />
           </div>
+
+          {mode === "image" && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="strength">Transformation strength</Label>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {strength}%
+                </span>
+              </div>
+              <input
+                id="strength"
+                type="range"
+                min={10}
+                max={95}
+                value={strength}
+                onChange={(e) => setStrength(Number(e.target.value))}
+                className="h-2 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-primary"
+              />
+              <p className="text-xs text-muted-foreground">
+                Lower keeps the original; higher reimagines it more freely.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Model</Label>
@@ -140,17 +363,23 @@ export function ImageStudio() {
             variant="primary"
             className="w-full"
             onClick={handleGenerate}
-            disabled={!prompt.trim() || loading}
+            disabled={!canGenerate}
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            {loading ? "Generating…" : "Generate"}
+            {loading
+              ? "Generating…"
+              : mode === "text"
+                ? "Generate 4 angles"
+                : "Generate"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Uses ~2 credits per image
+            {mode === "text"
+              ? "Creates a 4-angle set · ~8 credits"
+              : "Uses ~2 credits per image"}
           </p>
         </div>
       </Card>
@@ -162,13 +391,17 @@ export function ImageStudio() {
           <Badge variant="muted">{images.length} images</Badge>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {loading && (
-            <div className="aspect-square animate-pulse rounded-2xl bg-muted shimmer" />
-          )}
+          {Array.from({ length: pendingCount }).map((_, i) => (
+            <div
+              key={`skeleton-${i}`}
+              className="aspect-square animate-pulse rounded-2xl bg-muted shimmer"
+            />
+          ))}
           {images.map((img) => (
             <GalleryTile key={img.id} image={img} onLike={toggleLike} />
           ))}
         </div>
+      </div>
       </div>
     </div>
   );
@@ -189,6 +422,7 @@ function GalleryTile({
           alt={image.prompt}
           fill
           sizes="(max-width: 640px) 50vw, 33vw"
+          unoptimized
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
@@ -212,6 +446,17 @@ function GalleryTile({
               />
             </button>
             <button
+              onClick={() => {
+                const a = document.createElement("a");
+                a.href = image.url;
+                a.download = `jenverse-${image.id}.png`;
+                a.target = "_blank";
+                a.rel = "noopener";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                toast("Image download started");
+              }}
               className="flex h-7 w-7 items-center justify-center rounded-full bg-background/90 text-foreground transition-colors hover:bg-background"
               aria-label="Download"
             >

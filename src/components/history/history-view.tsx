@@ -11,10 +11,11 @@ import {
   ExternalLink,
   Copy,
   Trash2,
+  Download,
 } from "lucide-react";
 
 import { formatRelativeTime, formatNumber } from "@/lib/utils";
-import { historyItems } from "@/data/history";
+import { toast } from "@/components/ui/toast";
 import type { GenerationType, HistoryItem } from "@/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,17 +33,38 @@ import {
 
 type Filter = "all" | GenerationType;
 
-export function HistoryView() {
+export function HistoryView({ items }: { items: HistoryItem[] }) {
+  const [data, setData] = useState<HistoryItem[]>(items);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
 
-  const filtered = historyItems.filter((item) => {
+  const filtered = data.filter((item) => {
     const matchesFilter = filter === "all" || item.type === filter;
     const matchesQuery =
       item.title.toLowerCase().includes(query.toLowerCase()) ||
       item.prompt.toLowerCase().includes(query.toLowerCase());
     return matchesFilter && matchesQuery;
   });
+
+  const handleDelete = (id: string) => {
+    setData((prev) => prev.filter((item) => item.id !== id));
+    toast("Item deleted");
+  };
+
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "jenverse-history.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("History exported");
+  };
 
   return (
     <div className="space-y-5">
@@ -55,14 +77,20 @@ export function HistoryView() {
           </TabsList>
         </Tabs>
 
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search history…"
-            className="pl-10"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search history…"
+              className="pl-10"
+            />
+          </div>
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export</span>
+          </Button>
         </div>
       </div>
 
@@ -75,7 +103,7 @@ export function HistoryView() {
       ) : (
         <Card className="divide-y divide-border overflow-hidden p-0">
           {filtered.map((item) => (
-            <HistoryRow key={item.id} item={item} />
+            <HistoryRow key={item.id} item={item} onDelete={handleDelete} />
           ))}
         </Card>
       )}
@@ -83,7 +111,13 @@ export function HistoryView() {
   );
 }
 
-function HistoryRow({ item }: { item: HistoryItem }) {
+function HistoryRow({
+  item,
+  onDelete,
+}: {
+  item: HistoryItem;
+  onDelete: (id: string) => void;
+}) {
   const isImage = item.type === "image";
   return (
     <div className="flex items-center gap-4 p-4 transition-colors hover:bg-secondary/40">
@@ -94,6 +128,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
             alt={item.title}
             fill
             sizes="48px"
+            unoptimized
             className="object-cover"
           />
         ) : (
@@ -148,12 +183,20 @@ function HistoryRow({ item }: { item: HistoryItem }) {
             <ExternalLink className="h-4 w-4" />
             Open
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              navigator.clipboard?.writeText(item.prompt);
+              toast("Prompt copied");
+            }}
+          >
             <Copy className="h-4 w-4" />
             Copy prompt
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive focus:text-destructive">
+          <DropdownMenuItem
+            onClick={() => onDelete(item.id)}
+            className="text-destructive focus:text-destructive"
+          >
             <Trash2 className="h-4 w-4" />
             Delete
           </DropdownMenuItem>
