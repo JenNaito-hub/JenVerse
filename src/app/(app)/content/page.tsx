@@ -6,7 +6,11 @@ import { getProviderStatus } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Content Studio" };
 
-export default function ContentPage() {
+export default function ContentPage({
+  searchParams,
+}: {
+  searchParams: { topic?: string; style?: string };
+}) {
   const status = getProviderStatus();
   return (
     <div className="space-y-8 animate-fade-in">
@@ -14,7 +18,11 @@ export default function ContentPage() {
         title="Content Studio"
         description="Sản xuất bài đăng Facebook hàng loạt bằng AI — theo phong cách, tone và CTA bạn chọn."
       />
-      <ContentStudio aiConfigured={status.gemini || status.openai} />
+      <ContentStudio
+        aiConfigured={status.gemini || status.openai}
+        initialTopic={searchParams.topic ?? ""}
+        initialStyle={searchParams.style ?? ""}
+      />
     </div>
   );
 }

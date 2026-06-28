@@ -220,3 +220,15 @@ export interface VideoClip {
   aspectRatio: string;
   createdAt: string;
 }
+
+export interface ScriptTemplate {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  framework: string[];
+  example: string;
+  style: string;
+  tags: string[];
+  color: string;
+}

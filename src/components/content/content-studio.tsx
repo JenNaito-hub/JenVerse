@@ -49,9 +49,19 @@ import { EmptyState } from "@/components/shared/empty-state";
 
 type Filter = "all" | ContentStatus;
 
-export function ContentStudio({ aiConfigured }: { aiConfigured: boolean }) {
-  const [topic, setTopic] = useState("");
-  const [style, setStyle] = useState(contentStyles[0]);
+export function ContentStudio({
+  aiConfigured,
+  initialTopic = "",
+  initialStyle = "",
+}: {
+  aiConfigured: boolean;
+  initialTopic?: string;
+  initialStyle?: string;
+}) {
+  const [topic, setTopic] = useState(initialTopic);
+  const [style, setStyle] = useState(
+    contentStyles.includes(initialStyle) ? initialStyle : contentStyles[0]
+  );
   const [tone, setTone] = useState(contentTones[0]);
   const [contentType, setContentType] = useState(contentTypes[0]);
   const [cta, setCta] = useState(ctaOptions[0]);
