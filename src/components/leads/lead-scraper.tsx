@@ -15,6 +15,8 @@ import {
   CloudSun,
   Phone,
   Copy,
+  MessageSquare,
+  Check,
 } from "lucide-react";
 
 import { cn, formatRelativeTime, getInitials } from "@/lib/utils";
@@ -26,6 +28,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 
 const sources: { id: LeadSource; icon: typeof Facebook }[] = [
@@ -61,6 +72,30 @@ export function LeadScraper({ aiConfigured }: { aiConfigured: boolean }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [hydrated, setHydrated] = useState(false);
+
+  const [replyLead, setReplyLead] = useState<Lead | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [replyLoading, setReplyLoading] = useState(false);
+  const [replyCopied, setReplyCopied] = useState(false);
+
+  const generateReply = async (lead: Lead) => {
+    setReplyLead(lead);
+    setReplyText("");
+    setReplyCopied(false);
+    setReplyLoading(true);
+    try {
+      const res = await fetch("/api/leads/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: lead.name, comment: lead.comment }),
+      });
+      const data = await res.json();
+      setReplyText(data.reply ?? "");
+    } catch {
+      setReplyText("Không tạo được câu trả lời — vui lòng thử lại.");
+    }
+    setReplyLoading(false);
+  };
 
   // Restore the last scrape from the browser.
   useEffect(() => {
@@ -313,6 +348,15 @@ export function LeadScraper({ aiConfigured }: { aiConfigured: boolean }) {
                         ))}
                       </div>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-2 h-7 px-2 text-xs"
+                      onClick={() => generateReply(lead)}
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Gợi ý trả lời
+                    </Button>
                   </div>
                   <span
                     className={cn(
@@ -329,6 +373,61 @@ export function LeadScraper({ aiConfigured }: { aiConfigured: boolean }) {
           </Card>
         </>
       )}
+
+      <Dialog open={!!replyLead} onOpenChange={(o) => !o && setReplyLead(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Gợi ý trả lời {replyLead?.name}
+            </DialogTitle>
+            <DialogDescription className="line-clamp-2">
+              “{replyLead?.comment}”
+            </DialogDescription>
+          </DialogHeader>
+
+          {replyLoading ? (
+            <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              AI đang soạn câu trả lời…
+            </div>
+          ) : (
+            <Textarea
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              className="min-h-[120px]"
+            />
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => replyLead && generateReply(replyLead)}
+              disabled={replyLoading}
+            >
+              <Sparkles className="h-4 w-4" />
+              Tạo lại
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                navigator.clipboard?.writeText(replyText);
+                setReplyCopied(true);
+                toast("Đã copy câu trả lời");
+                setTimeout(() => setReplyCopied(false), 1600);
+              }}
+              disabled={replyLoading || !replyText}
+            >
+              {replyCopied ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              {replyCopied ? "Đã copy" : "Copy câu trả lời"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
