@@ -18,11 +18,14 @@ export const env = {
     process.env.APIFY_FACEBOOK_ACTOR ?? "apify~facebook-comments-scraper",
   apifyTiktokActor:
     process.env.APIFY_TIKTOK_ACTOR ?? "clockworks~tiktok-comments-scraper",
+  // Text-to-video provider (Runway / Pika / Luma) — optional.
+  videoApiKey: process.env.VIDEO_API_KEY ?? "",
 } as const;
 
 export const isOpenAIConfigured = () => env.openaiKey.length > 0;
 export const isGeminiConfigured = () => env.geminiKey.length > 0;
 export const isApifyConfigured = () => env.apifyToken.length > 0;
+export const isVideoConfigured = () => env.videoApiKey.length > 0;
 
 /** True when the public Supabase env vars are present (safe on the client). */
 export const isSupabaseConfigured = () =>

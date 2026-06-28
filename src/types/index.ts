@@ -209,3 +209,14 @@ export interface ScheduledPost {
   channelId: string;
   title: string;
 }
+
+export interface VideoClip {
+  id: string;
+  title: string;
+  prompt: string;
+  poster: string;
+  url: string;
+  duration: string;
+  aspectRatio: string;
+  createdAt: string;
+}
