@@ -13,7 +13,6 @@ const PROTECTED_PREFIXES = [
   "/scripts",
   "/schedule",
   "/templates",
-  "/workflows",
   "/leads",
   "/history",
   "/settings",
