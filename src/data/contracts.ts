@@ -400,13 +400,247 @@ const acceptance: ContractTemplate = {
   },
 };
 
+/* ================================================================== *
+ * 5 · HỢP ĐỒNG ĐẠI SỨ THƯƠNG HIỆU (Độc quyền)
+ * ================================================================== */
+
+const ambassador: ContractTemplate = {
+  id: "ambassador",
+  title: "Đại sứ độc quyền",
+  short: "Đại sứ",
+  description: "Hợp đồng đại sứ thương hiệu độc quyền — talent cam kết không hợp tác với đối thủ trong ngành hàng.",
+  color: "#F58BD6",
+  groups: ["Thông tin hợp đồng", GROUP_A, GROUP_B, "Phạm vi độc quyền", "Quyền lợi"],
+  fields: [
+    { key: "contract_no", label: "Số hợp đồng", type: "text", group: "Thông tin hợp đồng", placeholder: "01/2026/HĐĐSTH-BBF" },
+    { key: "location", label: "Nơi ký", type: "text", group: "Thông tin hợp đồng", defaultValue: "TP. Hồ Chí Minh" },
+    { key: "sign_date", label: "Ngày ký", type: "date", group: "Thông tin hợp đồng", required: true },
+    ...partyAFields,
+    ...partyBFields,
+    { key: "brand", label: "Nhãn hàng đại diện", type: "text", group: "Phạm vi độc quyền", span: "full", required: true, defaultValue: "Babyface" },
+    { key: "category", label: "Ngành hàng độc quyền", type: "text", group: "Phạm vi độc quyền", span: "full", placeholder: "Mỹ phẩm, chăm sóc da", required: true },
+    { key: "start_date", label: "Bắt đầu", type: "date", group: "Phạm vi độc quyền" },
+    { key: "end_date", label: "Kết thúc", type: "date", group: "Phạm vi độc quyền" },
+    { key: "excluded", label: "Đối thủ loại trừ", type: "textarea", group: "Phạm vi độc quyền", span: "full", hint: "Mỗi dòng một thương hiệu/đối thủ mà Bên B không được hợp tác.", placeholder: "Các thương hiệu mỹ phẩm cạnh tranh trực tiếp\nNhãn hàng cùng phân khúc chăm sóc da" },
+    { key: "fee", label: "Thù lao trọn gói (VNĐ)", type: "number", group: "Quyền lợi", placeholder: "300000000" },
+    { key: "benefits", label: "Quyền lợi khác", type: "textarea", group: "Quyền lợi", span: "full", hint: "Mỗi dòng một quyền lợi.", placeholder: "Sản phẩm sử dụng miễn phí trong suốt hợp đồng\n% hoa hồng trên doanh thu mã giới thiệu\nƯu tiên tham gia sự kiện của nhãn hàng" },
+    { key: "posts", label: "Cam kết truyền thông", type: "textarea", group: "Quyền lợi", span: "full", hint: "Định lượng nội dung Bên B phải đăng.", placeholder: "Tối thiểu 04 bài/tháng trên trang cá nhân\n02 video/tháng trên TikTok" },
+  ],
+  build: (v) => {
+    const excluded = (v.excluded || "").split("\n").map((s) => s.trim()).filter(Boolean);
+    const benefits = (v.benefits || "").split("\n").map((s) => s.trim()).filter(Boolean);
+    const posts = (v.posts || "").split("\n").map((s) => s.trim()).filter(Boolean);
+    const blocks: ContractBlock[] = [
+      ...nationalHeader(),
+      { type: "center", text: "HỢP ĐỒNG ĐẠI SỨ THƯƠNG HIỆU", strong: true, size: "lg" },
+      { type: "center", text: "(ĐỘC QUYỀN)", italic: true, size: "sm" },
+      { type: "center", text: `Số: ${fallback(v.contract_no, "……/HĐĐSTH-BBF")}`, size: "sm" },
+      { type: "spacer" },
+      { type: "para", text: `Hôm nay, ${formatVnDate(v.sign_date)}, tại ${fallback(v.location, "……")}, chúng tôi gồm:` },
+      { type: "spacer" },
+      ...partyABlock(v),
+      { type: "spacer" },
+      ...partyBBlock(v),
+      { type: "spacer" },
+      { type: "para", text: "Hai bên thống nhất ký kết hợp đồng đại sứ thương hiệu với các điều khoản sau:" },
+      { type: "heading", text: "ĐIỀU 1. CHỈ ĐỊNH ĐẠI SỨ" },
+      {
+        type: "para",
+        indent: true,
+        text: `Bên A chỉ định Bên B làm Đại sứ thương hiệu độc quyền cho nhãn hàng ${fallback(v.brand, "……")}, ngành hàng ${fallback(v.category, "……")}.`,
+      },
+      {
+        type: "para",
+        indent: true,
+        text: `Thời hạn: từ ${v.start_date ? formatVnDate(v.start_date) : "……"} đến ${v.end_date ? formatVnDate(v.end_date) : "……"}.`,
+      },
+      { type: "heading", text: "ĐIỀU 2. CAM KẾT ĐỘC QUYỀN" },
+      {
+        type: "para",
+        indent: true,
+        text: `Trong thời hạn hợp đồng, Bên B KHÔNG được quảng cáo, đại diện hay hợp tác với bất kỳ thương hiệu nào cạnh tranh trong ngành hàng ${fallback(v.category, "……")} nếu chưa có văn bản đồng ý của Bên A.`,
+      },
+    ];
+    if (excluded.length) {
+      blocks.push({ type: "para", indent: true, text: "Cụ thể loại trừ các đối tượng:" });
+      blocks.push({ type: "list", items: excluded, ordered: false });
+    }
+    blocks.push({ type: "heading", text: "ĐIỀU 3. CAM KẾT TRUYỀN THÔNG CỦA BÊN B" });
+    if (posts.length) blocks.push({ type: "list", items: posts, ordered: true });
+    else blocks.push({ type: "para", indent: true, text: "Theo kế hoạch truyền thông do hai bên thống nhất từng thời kỳ." });
+    blocks.push({ type: "heading", text: "ĐIỀU 4. QUYỀN LỢI CỦA BÊN B" });
+    blocks.push({
+      type: "para",
+      indent: true,
+      text: `Thù lao trọn gói: ${formatVnMoney(v.fee)} cho toàn bộ thời hạn hợp đồng (đã bao gồm thuế TNCN).`,
+    });
+    if (benefits.length) {
+      blocks.push({ type: "para", indent: true, text: "Quyền lợi kèm theo:" });
+      blocks.push({ type: "list", items: benefits, ordered: false });
+    }
+    blocks.push({ type: "heading", text: "ĐIỀU 5. VI PHẠM & ĐIỀU KHOẢN CHUNG" });
+    blocks.push({
+      type: "list",
+      items: [
+        "Vi phạm cam kết độc quyền, Bên B phải hoàn trả toàn bộ thù lao đã nhận và bồi thường theo thỏa thuận của hai bên.",
+        "Bên A được toàn quyền sử dụng hình ảnh, sản phẩm truyền thông của Bên B trong phạm vi hợp đồng.",
+        "Hợp đồng có hiệu lực từ ngày ký, lập thành 02 bản có giá trị như nhau, mỗi bên giữ 01 bản.",
+      ],
+    });
+    blocks.push({ type: "spacer" });
+    blocks.push(signatures);
+    return blocks;
+  },
+};
+
+/* ================================================================== *
+ * 6 · THANH LÝ HỢP ĐỒNG
+ * ================================================================== */
+
+const liquidation: ContractTemplate = {
+  id: "liquidation",
+  title: "Thanh lý hợp đồng",
+  short: "Thanh lý",
+  description: "Biên bản thanh lý — xác nhận hai bên đã hoàn thành nghĩa vụ và chấm dứt hợp đồng.",
+  color: "#FF8B8B",
+  groups: ["Biên bản", GROUP_A, GROUP_B, "Nội dung thanh lý"],
+  fields: [
+    { key: "liq_no", label: "Số biên bản", type: "text", group: "Biên bản", placeholder: "01/BBTL-BBF" },
+    { key: "location", label: "Nơi lập", type: "text", group: "Biên bản", defaultValue: "TP. Hồ Chí Minh" },
+    { key: "sign_date", label: "Ngày lập", type: "date", group: "Biên bản", required: true },
+    { key: "contract_ref", label: "Thanh lý hợp đồng số", type: "text", group: "Biên bản", required: true, placeholder: "01/2025/HĐHT-BBF" },
+    { key: "contract_date", label: "Ký ngày", type: "date", group: "Biên bản" },
+    ...partyAFields.filter((f) => ["partyA_name", "partyA_rep", "partyA_role"].includes(f.key)),
+    ...partyBFields.filter((f) => ["partyB_name", "partyB_stage", "partyB_id", "partyB_phone"].includes(f.key)),
+    { key: "result", label: "Tình trạng thực hiện", type: "textarea", group: "Nội dung thanh lý", span: "full", placeholder: "Hai bên đã hoàn thành đầy đủ các nghĩa vụ theo hợp đồng." },
+    { key: "settle", label: "Công nợ còn lại (VNĐ)", type: "number", group: "Nội dung thanh lý", placeholder: "0", hint: "Để 0 nếu đã tất toán." },
+    { key: "settle_side", label: "Bên thanh toán", type: "text", group: "Nội dung thanh lý", placeholder: "Bên A thanh toán cho Bên B", hint: "Bỏ trống nếu không còn công nợ." },
+    { key: "note", label: "Ghi chú thêm", type: "text", group: "Nội dung thanh lý", span: "full", placeholder: "Hai bên không còn khiếu nại gì về sau." },
+  ],
+  build: (v) => {
+    const blocks: ContractBlock[] = [
+      ...nationalHeader(),
+      { type: "center", text: "BIÊN BẢN THANH LÝ HỢP ĐỒNG", strong: true, size: "lg" },
+      { type: "center", text: `Số: ${fallback(v.liq_no, "……/BBTL-BBF")}`, size: "sm" },
+      { type: "spacer" },
+      {
+        type: "para",
+        text: `Căn cứ Hợp đồng số ${fallback(v.contract_ref, "……………")} ký ${v.contract_date ? formatVnDate(v.contract_date) : "ngày …/…/……"};`,
+      },
+      { type: "para", text: `Hôm nay, ${formatVnDate(v.sign_date)}, tại ${fallback(v.location, "……")}, hai bên gồm:` },
+      { type: "spacer" },
+      { type: "kv", label: "BÊN A", value: `${fallback(v.partyA_name)} — đại diện ${fallback(v.partyA_rep, "……")}${v.partyA_role ? " (" + v.partyA_role + ")" : ""}` },
+      { type: "kv", label: "BÊN B", value: `${fallback(v.partyB_name)}${v.partyB_stage ? " (" + v.partyB_stage + ")" : ""} — CCCD ${fallback(v.partyB_id, "……")}` },
+      { type: "spacer" },
+      { type: "para", text: "Cùng nhau thống nhất thanh lý hợp đồng với nội dung:" },
+      { type: "heading", text: "ĐIỀU 1. TÌNH TRẠNG THỰC HIỆN" },
+      { type: "para", indent: true, text: fallback(v.result, "Hai bên đã hoàn thành đầy đủ các nghĩa vụ theo hợp đồng.") },
+      { type: "heading", text: "ĐIỀU 2. CÔNG NỢ & TẤT TOÁN" },
+      {
+        type: "para",
+        indent: true,
+        text:
+          !v.settle || Number(v.settle) === 0
+            ? "Hai bên xác nhận đã tất toán toàn bộ, không còn công nợ."
+            : `${fallback(v.settle_side, "Bên có nghĩa vụ")} thanh toán số tiền còn lại: ${formatVnMoney(v.settle)}.`,
+      },
+      { type: "heading", text: "ĐIỀU 3. CHẤM DỨT HỢP ĐỒNG" },
+      {
+        type: "list",
+        items: [
+          "Hợp đồng nêu trên được chấm dứt kể từ ngày ký biên bản này.",
+          v.note ? v.note : "Hai bên không còn bất kỳ khiếu nại hay ràng buộc nào với nhau về sau.",
+          "Biên bản lập thành 02 bản có giá trị như nhau, mỗi bên giữ 01 bản.",
+        ],
+      },
+      { type: "spacer" },
+      { type: "signatures", left: "ĐẠI DIỆN BÊN A", right: "ĐẠI DIỆN BÊN B" },
+    ];
+    return blocks;
+  },
+};
+
+/* ================================================================== *
+ * 7 · THỎA THUẬN BẢO MẬT (NDA)
+ * ================================================================== */
+
+const nda: ContractTemplate = {
+  id: "nda",
+  title: "Thỏa thuận bảo mật",
+  short: "NDA",
+  description: "NDA — ràng buộc bảo mật thông tin dự án, concept, dữ liệu giữa Babyface và talent/đối tác.",
+  color: "#4FC3D6",
+  groups: ["Thông tin", GROUP_A, GROUP_B, "Điều khoản bảo mật"],
+  fields: [
+    { key: "nda_no", label: "Số thỏa thuận", type: "text", group: "Thông tin", placeholder: "01/NDA-BBF" },
+    { key: "location", label: "Nơi ký", type: "text", group: "Thông tin", defaultValue: "TP. Hồ Chí Minh" },
+    { key: "sign_date", label: "Ngày ký", type: "date", group: "Thông tin", required: true },
+    ...partyAFields.filter((f) => ["partyA_name", "partyA_rep", "partyA_role", "partyA_address"].includes(f.key)),
+    ...partyBFields.filter((f) => ["partyB_name", "partyB_stage", "partyB_id", "partyB_phone"].includes(f.key)),
+    { key: "scope_project", label: "Phạm vi dự án", type: "text", group: "Điều khoản bảo mật", span: "full", placeholder: "Chiến dịch ra mắt sản phẩm mới quý III/2026", required: true },
+    { key: "confidential", label: "Thông tin bảo mật", type: "textarea", group: "Điều khoản bảo mật", span: "full", hint: "Mỗi dòng một loại thông tin.", placeholder: "Concept, kịch bản, kế hoạch truyền thông chưa công bố\nThông tin sản phẩm, giá, chiến lược kinh doanh\nDữ liệu khách hàng, đối tác" },
+    { key: "duration", label: "Thời hạn bảo mật", type: "text", group: "Điều khoản bảo mật", defaultValue: "03 năm kể từ ngày ký" },
+    { key: "penalty", label: "Mức phạt vi phạm (VNĐ)", type: "number", group: "Điều khoản bảo mật", placeholder: "100000000" },
+  ],
+  build: (v) => {
+    const items = (v.confidential || "").split("\n").map((s) => s.trim()).filter(Boolean);
+    const blocks: ContractBlock[] = [
+      ...nationalHeader(),
+      { type: "center", text: "THỎA THUẬN BẢO MẬT THÔNG TIN", strong: true, size: "lg" },
+      { type: "center", text: "(NON-DISCLOSURE AGREEMENT)", italic: true, size: "sm" },
+      { type: "center", text: `Số: ${fallback(v.nda_no, "……/NDA-BBF")}`, size: "sm" },
+      { type: "spacer" },
+      { type: "para", text: `Hôm nay, ${formatVnDate(v.sign_date)}, tại ${fallback(v.location, "……")}, hai bên gồm:` },
+      { type: "spacer" },
+      { type: "kv", label: "BÊN A (Bên tiết lộ)", value: `${fallback(v.partyA_name)} — đại diện ${fallback(v.partyA_rep, "……")}${v.partyA_role ? " (" + v.partyA_role + ")" : ""}` },
+      { type: "kv", label: "BÊN B (Bên nhận)", value: `${fallback(v.partyB_name)}${v.partyB_stage ? " (" + v.partyB_stage + ")" : ""} — CCCD ${fallback(v.partyB_id, "……")}` },
+      { type: "spacer" },
+      { type: "para", text: `Thống nhất ký thỏa thuận bảo mật trong khuôn khổ: ${fallback(v.scope_project, "…………")}.` },
+      { type: "heading", text: "ĐIỀU 1. THÔNG TIN BẢO MẬT" },
+    ];
+    if (items.length) {
+      blocks.push({ type: "para", indent: true, text: "Bao gồm nhưng không giới hạn:" });
+      blocks.push({ type: "list", items, ordered: false });
+    } else {
+      blocks.push({ type: "para", indent: true, text: "Mọi thông tin, tài liệu Bên A cung cấp và chưa được công bố ra công chúng." });
+    }
+    blocks.push({ type: "heading", text: "ĐIỀU 2. NGHĨA VỤ CỦA BÊN B" });
+    blocks.push({
+      type: "list",
+      items: [
+        "Giữ bí mật tuyệt đối, không tiết lộ cho bên thứ ba dưới bất kỳ hình thức nào.",
+        "Chỉ sử dụng thông tin cho mục đích thực hiện công việc với Bên A.",
+        "Hoàn trả hoặc tiêu hủy tài liệu mật khi kết thúc hợp tác nếu Bên A yêu cầu.",
+      ],
+    });
+    blocks.push({ type: "heading", text: "ĐIỀU 3. THỜI HẠN" });
+    blocks.push({ type: "para", indent: true, text: `Nghĩa vụ bảo mật có hiệu lực trong ${fallback(v.duration, "03 năm kể từ ngày ký")}, kể cả sau khi hợp đồng chính chấm dứt.` });
+    blocks.push({ type: "heading", text: "ĐIỀU 4. VI PHẠM" });
+    blocks.push({
+      type: "para",
+      indent: true,
+      text:
+        !v.penalty || Number(v.penalty) === 0
+          ? "Bên vi phạm phải bồi thường toàn bộ thiệt hại thực tế phát sinh cho Bên A."
+          : `Bên B vi phạm phải chịu phạt ${formatVnMoney(v.penalty)} và bồi thường toàn bộ thiệt hại thực tế cho Bên A.`,
+    });
+    blocks.push({ type: "para", text: "Thỏa thuận lập thành 02 bản có giá trị như nhau, mỗi bên giữ 01 bản, hiệu lực kể từ ngày ký." });
+    blocks.push({ type: "spacer" });
+    blocks.push({ type: "signatures", left: "ĐẠI DIỆN BÊN A", right: "BÊN B" });
+    return blocks;
+  },
+};
+
 /* ------------------------------------------------------------------ */
 
 export const contractTemplates: ContractTemplate[] = [
   contractCollab,
   talentRelease,
+  ambassador,
   extension,
   acceptance,
+  liquidation,
+  nda,
 ];
 
 /** Initial value map for a template — pre-fills every field's default. */

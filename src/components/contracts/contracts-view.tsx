@@ -1,16 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FileSignature,
   Camera,
   CalendarPlus,
   ClipboardCheck,
+  Star,
+  FileX,
+  ShieldCheck,
   Copy,
   Check,
   Printer,
   Download,
   RotateCcw,
+  Save,
+  FolderOpen,
+  Trash2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -32,9 +39,37 @@ import {
 const icons: Record<string, LucideIcon> = {
   collab: FileSignature,
   release: Camera,
+  ambassador: Star,
   extension: CalendarPlus,
   bbnt: ClipboardCheck,
+  liquidation: FileX,
+  nda: ShieldCheck,
 };
+
+/* ------------------------------------------------------------------ *
+ * Draft persistence (localStorage)
+ * ------------------------------------------------------------------ */
+
+const WORKING_KEY = "jenverse.contracts.working";
+const DRAFTS_KEY = "jenverse.contracts.drafts";
+
+interface SavedDraft {
+  id: string;
+  name: string;
+  templateId: string;
+  values: Record<string, string>;
+  savedAt: number;
+}
+
+function loadDrafts(): SavedDraft[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(DRAFTS_KEY);
+    return raw ? (JSON.parse(raw) as SavedDraft[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 /* ------------------------------------------------------------------ *
  * Document preview
@@ -179,6 +214,49 @@ export function ContractsView() {
     return init;
   });
   const [copied, setCopied] = useState(false);
+  const [drafts, setDrafts] = useState<SavedDraft[]>([]);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const hydrated = useRef(false);
+
+  // Restore working values + saved drafts after mount (avoids SSR mismatch).
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(WORKING_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as Record<string, Record<string, string>>;
+        setStore((prev) => {
+          const merged = { ...prev };
+          for (const t of contractTemplates) {
+            merged[t.id] = { ...prev[t.id], ...(saved[t.id] ?? {}) };
+          }
+          return merged;
+        });
+      }
+    } catch {
+      /* ignore corrupt storage */
+    }
+    setDrafts(loadDrafts());
+    hydrated.current = true;
+  }, []);
+
+  // Persist working values whenever they change (after hydration).
+  useEffect(() => {
+    if (!hydrated.current) return;
+    try {
+      window.localStorage.setItem(WORKING_KEY, JSON.stringify(store));
+    } catch {
+      /* quota / disabled storage — ignore */
+    }
+  }, [store]);
+
+  const persistDrafts = (next: SavedDraft[]) => {
+    setDrafts(next);
+    try {
+      window.localStorage.setItem(DRAFTS_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  };
 
   const template = contractTemplates.find((t) => t.id === templateId)!;
   const values = store[templateId];
@@ -193,6 +271,34 @@ export function ContractsView() {
     setStore((prev) => ({ ...prev, [templateId]: initialValues(template) }));
     toast("Đã đặt lại biểu mẫu");
   };
+
+  const saveDraft = () => {
+    const suggested = values.partyB_name?.trim()
+      ? `${template.short} — ${values.partyB_name.trim()}`
+      : `${template.title} ${new Date().toLocaleDateString("vi-VN")}`;
+    const name = window.prompt("Tên bản nháp:", suggested);
+    if (!name) return;
+    const draft: SavedDraft = {
+      id: `${templateId}-${Date.now()}`,
+      name: name.trim(),
+      templateId,
+      values: { ...values },
+      savedAt: Date.now(),
+    };
+    persistDrafts([draft, ...drafts]);
+    toast("Đã lưu bản nháp");
+  };
+
+  const loadDraft = (d: SavedDraft) => {
+    const target = contractTemplates.find((t) => t.id === d.templateId);
+    if (!target) return;
+    setTemplateId(d.templateId);
+    setStore((prev) => ({ ...prev, [d.templateId]: { ...initialValues(target), ...d.values } }));
+    setShowDrafts(false);
+    toast(`Đã mở “${d.name}”`);
+  };
+
+  const deleteDraft = (id: string) => persistDrafts(drafts.filter((d) => d.id !== id));
 
   const copy = () => {
     navigator.clipboard?.writeText(plainText);
@@ -275,7 +381,7 @@ export function ContractsView() {
   return (
     <div className="space-y-6">
       {/* Template picker */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {contractTemplates.map((t) => {
           const Icon = icons[t.id] ?? FileSignature;
           const active = t.id === templateId;
@@ -308,16 +414,84 @@ export function ContractsView() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
         {/* Form */}
         <Card className="flex flex-col p-5">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex items-start justify-between gap-2">
             <div>
               <h2 className="text-base font-semibold tracking-tight">{template.title}</h2>
               <p className="text-xs text-muted-foreground">Điền thông tin — văn bản cập nhật tức thì.</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={resetTemplate}>
-              <RotateCcw className="h-4 w-4" />
-              Đặt lại
-            </Button>
+            <div className="flex shrink-0 items-center gap-1">
+              <Button variant="ghost" size="sm" onClick={saveDraft}>
+                <Save className="h-4 w-4" />
+                Lưu
+              </Button>
+              <Button
+                variant={showDrafts ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setShowDrafts((s) => !s)}
+              >
+                <FolderOpen className="h-4 w-4" />
+                Nháp{drafts.length ? ` (${drafts.length})` : ""}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={resetTemplate}>
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
+
+          {showDrafts && (
+            <div className="mb-4 rounded-xl border border-border bg-secondary/40 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Bản nháp đã lưu
+                </p>
+                <button
+                  onClick={() => setShowDrafts(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              {drafts.length === 0 ? (
+                <p className="py-2 text-center text-xs text-muted-foreground">
+                  Chưa có bản nháp. Nhấn “Lưu” để lưu bản hiện tại.
+                </p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {drafts.map((d) => {
+                    const t = contractTemplates.find((x) => x.id === d.templateId);
+                    return (
+                      <li
+                        key={d.id}
+                        className="flex items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm shadow-sm"
+                      >
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: t?.color ?? "#999" }}
+                        />
+                        <button
+                          onClick={() => loadDraft(d)}
+                          className="flex-1 truncate text-left hover:underline"
+                          title={d.name}
+                        >
+                          {d.name}
+                          <span className="ml-1.5 text-[11px] text-muted-foreground">
+                            {t?.short}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => deleteDraft(d.id)}
+                          className="text-muted-foreground transition-colors hover:text-destructive"
+                          title="Xóa"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
 
           <div className="space-y-6">
             {grouped.map(({ group, fields }) => (
