@@ -21,6 +21,8 @@ import {
   FileText,
   ImagePlus,
   Loader2,
+  Sparkles,
+  Wand2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -223,6 +225,8 @@ export function ContractsView() {
   const [showDrafts, setShowDrafts] = useState(false);
   const [logo, setLogo] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [brief, setBrief] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const hydrated = useRef(false);
   const logoInput = useRef<HTMLInputElement>(null);
 
@@ -363,6 +367,43 @@ export function ContractsView() {
     }
   };
 
+  const runAI = async () => {
+    const text = brief.trim();
+    if (!text) {
+      toast("Nhập mô tả trước đã");
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/contracts/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brief: text, currentId: templateId }),
+      });
+      if (!res.ok) throw new Error("bad response");
+      const data = (await res.json()) as {
+        templateId: string;
+        values: Record<string, string>;
+        live: boolean;
+      };
+      const target = contractTemplates.find((t) => t.id === data.templateId) ?? template;
+      setTemplateId(target.id);
+      setStore((prev) => ({
+        ...prev,
+        [target.id]: { ...initialValues(target), ...data.values },
+      }));
+      toast(
+        data.live
+          ? `AI đã soạn “${target.short}” — kiểm tra lại nhé`
+          : `Đã điền tạm “${target.short}” (demo). Thêm AI key để chính xác hơn.`
+      );
+    } catch {
+      toast("Soạn tự động thất bại — thử lại");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const copy = () => {
     navigator.clipboard?.writeText(plainText);
     setCopied(true);
@@ -442,8 +483,58 @@ export function ContractsView() {
     fields: template.fields.filter((f) => f.group === g),
   }));
 
+  const briefExamples = [
+    "Hợp đồng với talent Trần Khánh Linh, dự án BST Xuân 2026, thù lao 50 triệu, quay 3 TVC + chụp 20 ảnh, thanh toán 2 đợt 50-50",
+    "NDA với KOL Minh Anh cho chiến dịch ra mắt sản phẩm quý 3, phạt vi phạm 100 triệu, bảo mật 3 năm",
+    "Đại sứ độc quyền ngành mỹ phẩm cho Ngọc Trinh, trọn gói 300 triệu, 4 bài/tháng",
+  ];
+
   return (
     <div className="space-y-6">
+      {/* AI quick-draft */}
+      <Card className="overflow-hidden border-transparent bg-foreground p-0 text-background">
+        <div className="p-5 sm:p-6">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Wand2 className="h-4 w-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold tracking-tight">Soạn nhanh bằng AI</h2>
+              <p className="text-xs text-background/60">
+                Dán 1 câu mô tả — AI tự chọn loại văn bản và điền hết form.
+              </p>
+            </div>
+          </div>
+          <textarea
+            value={brief}
+            onChange={(e) => setBrief(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runAI();
+            }}
+            placeholder="VD: Làm hợp đồng với talent Khánh Linh, dự án BST Xuân 2026, 50 triệu, quay 3 TVC, thanh toán 2 đợt…"
+            rows={2}
+            className="w-full resize-none rounded-xl border border-background/15 bg-background/10 px-3.5 py-2.5 text-sm text-background placeholder:text-background/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          />
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-1.5">
+              {briefExamples.map((ex, i) => (
+                <button
+                  key={i}
+                  onClick={() => setBrief(ex)}
+                  className="rounded-full border border-background/15 px-2.5 py-1 text-[11px] text-background/70 transition-colors hover:bg-background/10"
+                >
+                  {["Hợp đồng", "NDA", "Đại sứ"][i]}
+                </button>
+              ))}
+            </div>
+            <Button variant="primary" size="sm" onClick={runAI} disabled={aiLoading}>
+              {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {aiLoading ? "Đang soạn…" : "Tạo hợp đồng"}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       {/* Template picker */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {contractTemplates.map((t) => {
