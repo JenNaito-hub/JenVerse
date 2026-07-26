@@ -18,11 +18,15 @@ import {
   FolderOpen,
   Trash2,
   X,
+  FileText,
+  ImagePlus,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
+import { downloadDocx } from "@/lib/contracts-docx";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +56,7 @@ const icons: Record<string, LucideIcon> = {
 
 const WORKING_KEY = "jenverse.contracts.working";
 const DRAFTS_KEY = "jenverse.contracts.drafts";
+const LOGO_KEY = "jenverse.contracts.logo";
 
 interface SavedDraft {
   id: string;
@@ -216,7 +221,10 @@ export function ContractsView() {
   const [copied, setCopied] = useState(false);
   const [drafts, setDrafts] = useState<SavedDraft[]>([]);
   const [showDrafts, setShowDrafts] = useState(false);
+  const [logo, setLogo] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const hydrated = useRef(false);
+  const logoInput = useRef<HTMLInputElement>(null);
 
   // Restore working values + saved drafts after mount (avoids SSR mismatch).
   useEffect(() => {
@@ -236,6 +244,11 @@ export function ContractsView() {
       /* ignore corrupt storage */
     }
     setDrafts(loadDrafts());
+    try {
+      setLogo(window.localStorage.getItem(LOGO_KEY));
+    } catch {
+      /* ignore */
+    }
     hydrated.current = true;
   }, []);
 
@@ -299,6 +312,56 @@ export function ContractsView() {
   };
 
   const deleteDraft = (id: string) => persistDrafts(drafts.filter((d) => d.id !== id));
+
+  const onLogoPick = (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast("Vui lòng chọn file ảnh");
+      return;
+    }
+    if (file.size > 1.5 * 1024 * 1024) {
+      toast("Ảnh quá lớn — chọn file dưới 1.5MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = String(reader.result);
+      setLogo(url);
+      try {
+        window.localStorage.setItem(LOGO_KEY, url);
+      } catch {
+        toast("Không lưu được logo (bộ nhớ đầy)");
+      }
+      toast("Đã thêm logo");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    setLogo(null);
+    try {
+      window.localStorage.removeItem(LOGO_KEY);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const exportWord = async () => {
+    setExporting(true);
+    try {
+      await downloadDocx({
+        title: template.title,
+        filename: `${template.short}-${values.sign_date || "draft"}`,
+        blocks,
+        logo,
+      });
+      toast("Đã xuất file Word (.docx)");
+    } catch {
+      toast("Xuất Word thất bại — thử lại");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const copy = () => {
     navigator.clipboard?.writeText(plainText);
@@ -366,7 +429,8 @@ export function ContractsView() {
   .sp { height: 8px; } hr { border: none; border-top: 1px solid #ccc; margin: 12px 0; }
   .sig { display: flex; justify-content: space-around; text-align: center; margin-top: 20px; }
   .sig > div { width: 45%; } .sig .b { margin-bottom: 2px; }
-</style></head><body>${body}
+  .logo { text-align: center; margin-bottom: 10px; } .logo img { max-height: 70px; max-width: 200px; }
+</style></head><body>${logo ? `<div class="logo"><img src="${logo}" alt="logo"/></div>` : ""}${body}
 <script>window.onload=function(){window.print();}<\/script>
 </body></html>`);
     win.document.close();
@@ -523,6 +587,27 @@ export function ContractsView() {
               Xem trước — khổ A4
             </Badge>
             <div className="flex flex-wrap gap-2">
+              <input
+                ref={logoInput}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  onLogoPick(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              {logo ? (
+                <Button variant="outline" size="sm" onClick={removeLogo} title="Xóa logo">
+                  <X className="h-4 w-4" />
+                  Logo
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => logoInput.current?.click()}>
+                  <ImagePlus className="h-4 w-4" />
+                  Logo
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={copy}>
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 {copied ? "Đã copy" : "Copy"}
@@ -530,6 +615,10 @@ export function ContractsView() {
               <Button variant="outline" size="sm" onClick={download}>
                 <Download className="h-4 w-4" />
                 .txt
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportWord} disabled={exporting}>
+                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                Word
               </Button>
               <Button variant="primary" size="sm" onClick={print}>
                 <Printer className="h-4 w-4" />
@@ -540,6 +629,14 @@ export function ContractsView() {
 
           <div className="max-h-[76vh] overflow-auto rounded-2xl border border-border bg-secondary/40 p-4 sm:p-6">
             <div className="mx-auto rounded-sm bg-white p-6 shadow-card sm:p-10">
+              {logo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logo}
+                  alt="Logo"
+                  className="mx-auto mb-3 max-h-[70px] max-w-[200px] object-contain"
+                />
+              )}
               <DocumentPreview blocks={blocks} />
             </div>
           </div>
