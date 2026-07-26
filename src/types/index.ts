@@ -232,3 +232,42 @@ export interface ScriptTemplate {
   tags: string[];
   color: string;
 }
+
+export type ContractFieldType = "text" | "textarea" | "date" | "number";
+
+export interface ContractField {
+  key: string;
+  label: string;
+  type: ContractFieldType;
+  placeholder?: string;
+  hint?: string;
+  defaultValue?: string;
+  required?: boolean;
+  /** Layout width inside the form grid */
+  span?: "full" | "half";
+  /** Group heading this field belongs to */
+  group: string;
+}
+
+export type ContractBlock =
+  | { type: "center"; text: string; strong?: boolean; italic?: boolean; size?: "sm" | "base" | "lg" }
+  | { type: "para"; text: string; strong?: boolean; indent?: boolean }
+  | { type: "heading"; text: string }
+  | { type: "list"; items: string[]; ordered?: boolean }
+  | { type: "kv"; label: string; value: string }
+  | { type: "divider" }
+  | { type: "spacer" }
+  | { type: "signatures"; left: string; right: string };
+
+export interface ContractTemplate {
+  id: string;
+  title: string;
+  short: string;
+  description: string;
+  color: string;
+  /** Ordered field groups shown in the form */
+  groups: string[];
+  fields: ContractField[];
+  /** Builds the document body from the current field values */
+  build: (v: Record<string, string>) => ContractBlock[];
+}
