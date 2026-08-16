@@ -125,7 +125,7 @@ function parseName(text: string): string | null {
       const t = toks[j].replace(/[.,;:]+$/, "");
       const bare = noAccent(t).replace(/[^a-z]/g, "");
       if (singleKw.has(bare) && name.length === 0) continue; // skip a chained role word
-      if (/^[A-ZĐÀ-Ỹ][\p{L}]+$/u.test(t)) name.push(t);
+      if (/^\p{Lu}[\p{L}]+$/u.test(t)) name.push(t);
       else break;
     }
     if (name.length >= 1) return name.join(" ");
