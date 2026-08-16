@@ -91,7 +91,7 @@ export function GlobalSearch() {
             setOpen(false);
           }
         }}
-        placeholder="Search projects, prompts, workflows…"
+        placeholder="Tìm bài viết, kịch bản, mẫu…"
         className="h-10 rounded-full border-transparent bg-secondary pl-10"
       />
 

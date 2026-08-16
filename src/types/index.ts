@@ -7,20 +7,6 @@ export interface NavItem {
   badge?: string;
 }
 
-export type ProjectStatus = "active" | "draft" | "archived";
-
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  status: ProjectStatus;
-  color: string;
-  assets: number;
-  members: TeamMember[];
-  updatedAt: string;
-  progress: number;
-}
-
 export interface TeamMember {
   id: string;
   name: string;
@@ -82,7 +68,7 @@ export interface ActivityItem {
   actor: TeamMember;
   action: string;
   target: string;
-  type: GenerationType | "project" | "system";
+  type: GenerationType | "system";
   createdAt: string;
 }
 
@@ -111,47 +97,6 @@ export interface Template {
   color: string;
   uses: number;
   featured?: boolean;
-}
-
-export type WorkflowCategory =
-  | "Generation"
-  | "Editing"
-  | "Consistency"
-  | "Commercial";
-
-export type WorkflowStepType =
-  | "input"
-  | "model"
-  | "processor"
-  | "control"
-  | "output";
-
-export interface WorkflowStep {
-  id: string;
-  type: WorkflowStepType;
-  label: string;
-  config?: Record<string, string | number | boolean>;
-}
-
-export interface WorkflowVersion {
-  version: string;
-  createdAt: string;
-  note: string;
-  steps: WorkflowStep[];
-}
-
-export interface Workflow {
-  id: string;
-  name: string;
-  description: string;
-  category: WorkflowCategory;
-  color: string;
-  tags: string[];
-  currentVersion: string;
-  versions: WorkflowVersion[];
-  runs: number;
-  updatedAt: string;
-  favorite?: boolean;
 }
 
 export type LeadSource = "facebook_post" | "facebook_group" | "tiktok_video";
