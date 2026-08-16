@@ -159,9 +159,6 @@ function HistoryRow({
 
       <div className="hidden shrink-0 text-right md:block">
         <p className="text-xs font-medium">{item.model}</p>
-        {item.project && (
-          <p className="text-xs text-muted-foreground">{item.project}</p>
-        )}
       </div>
 
       <div className="hidden w-24 shrink-0 text-right text-xs text-muted-foreground lg:block">

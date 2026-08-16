@@ -44,13 +44,13 @@ export default function AuthLayout({
           </div>
           <div className="space-y-6">
             <h2 className="text-balance text-4xl font-bold leading-tight text-background">
-              The premium AI workspace for{" "}
-              <span className="text-primary">knowledge</span> and{" "}
-              <span className="text-primary">images</span>.
+              The premium AI suite for{" "}
+              <span className="text-primary">content</span> and{" "}
+              <span className="text-primary">leads</span>.
             </h2>
             <p className="max-w-md text-background/60">
-              Generate on-brand content and visuals, organize everything into
-              projects, and keep a complete history — all in one place.
+              Sinh bài đăng hàng loạt, tạo ảnh &amp; video, thu lead và chốt
+              đơn — tất cả trong một nơi.
             </p>
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">OpenAI</Badge>

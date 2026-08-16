@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Search,
   LayoutTemplate,
-  Workflow,
+  PenLine,
   History as HistoryIcon,
   CornerDownLeft,
 } from "lucide-react";
@@ -14,7 +14,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { templates } from "@/data/templates";
-import { workflows } from "@/data/workflows";
+import { scriptTemplates } from "@/data/scripts";
 import { historyItems } from "@/data/history";
 
 interface SearchResult {
@@ -28,13 +28,13 @@ interface SearchResult {
 
 function buildIndex(): SearchResult[] {
   return [
-    ...workflows.map((w) => ({
-      id: `w-${w.id}`,
-      group: "Workflows",
-      title: w.name,
-      sub: w.description,
-      href: `/workflows/${w.id}`,
-      icon: Workflow,
+    ...scriptTemplates.map((s) => ({
+      id: `s-${s.id}`,
+      group: "Kịch bản",
+      title: s.title,
+      sub: s.description,
+      href: `/scripts`,
+      icon: PenLine,
     })),
     ...templates.map((t) => ({
       id: `t-${t.id}`,
@@ -91,7 +91,7 @@ export function GlobalSearch() {
             setOpen(false);
           }
         }}
-        placeholder="Search projects, prompts, workflows…"
+        placeholder="Tìm bài viết, kịch bản, mẫu…"
         className="h-10 rounded-full border-transparent bg-secondary pl-10"
       />
 

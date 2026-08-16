@@ -41,7 +41,7 @@ export const knowledgeConversations: KnowledgeConversation[] = [
         id: "k-2-m2",
         role: "assistant",
         content:
-          "Here are 12 onboarding FAQs covering setup, billing, and collaboration:\n\n1. How do I create my first workspace?\n2. Can I invite teammates during setup?\n3. Where do I connect my data sources?\n4. How is my usage billed?\n5. What's the difference between projects and workspaces?\n…and 7 more. Want the full answers drafted too?",
+          "Here are 12 onboarding FAQs covering setup, billing, and collaboration:\n\n1. How do I create my first workspace?\n2. Can I invite teammates during setup?\n3. Where do I connect my data sources?\n4. How is my usage billed?\n5. How do I schedule content to my channels?\n…and 7 more. Want the full answers drafted too?",
         createdAt: "2026-06-22T16:40:00Z",
       },
     ],

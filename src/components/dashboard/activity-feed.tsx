@@ -1,4 +1,4 @@
-import { BrainCircuit, ImageIcon, FolderKanban, Bell } from "lucide-react";
+import { BrainCircuit, ImageIcon, Bell } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,7 +9,6 @@ import type { ActivityItem } from "@/types";
 const typeIcon = {
   knowledge: BrainCircuit,
   image: ImageIcon,
-  project: FolderKanban,
   system: Bell,
 } as const;
 

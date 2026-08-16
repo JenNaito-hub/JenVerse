@@ -145,7 +145,52 @@ function AppearanceSettings() {
   );
 }
 
+const PROFILE_DEFAULTS = {
+  firstName: "Jen",
+  lastName: "Aescentic",
+  email: "jen.aescentic@gmail.com",
+};
+
+function usePersistedState<T extends Record<string, string>>(
+  key: string,
+  defaults: T
+) {
+  const [value, setValue] = useState<T>(defaults);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) setValue({ ...defaults, ...JSON.parse(saved) });
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  const save = () => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      /* ignore */
+    }
+  };
+  const reset = () => {
+    try {
+      const saved = localStorage.getItem(key);
+      setValue(saved ? { ...defaults, ...JSON.parse(saved) } : defaults);
+    } catch {
+      setValue(defaults);
+    }
+  };
+  return { value, setValue, save, reset };
+}
+
 function ProfileSettings() {
+  const { value, setValue, save, reset } = usePersistedState(
+    "jenverse:profile",
+    PROFILE_DEFAULTS
+  );
+  const set = (k: keyof typeof PROFILE_DEFAULTS, v: string) =>
+    setValue((prev) => ({ ...prev, [k]: v }));
+
   return (
     <Card>
       <CardHeader>
@@ -170,18 +215,27 @@ function ProfileSettings() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="firstName">First name</Label>
-            <Input id="firstName" defaultValue="Jen" />
+            <Input
+              id="firstName"
+              value={value.firstName}
+              onChange={(e) => set("firstName", e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="lastName">Last name</Label>
-            <Input id="lastName" defaultValue="Aescentic" />
+            <Input
+              id="lastName"
+              value={value.lastName}
+              onChange={(e) => set("lastName", e.target.value)}
+            />
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              defaultValue="jen.aescentic@gmail.com"
+              value={value.email}
+              onChange={(e) => set("email", e.target.value)}
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
@@ -190,8 +244,16 @@ function ProfileSettings() {
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="outline">Cancel</Button>
-          <Button variant="primary" onClick={() => toast("Profile saved")}>
+          <Button variant="outline" onClick={reset}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              save();
+              toast("Profile saved");
+            }}
+          >
             Save changes
           </Button>
         </div>
@@ -200,7 +262,16 @@ function ProfileSettings() {
   );
 }
 
+const WORKSPACE_DEFAULTS = { wsName: "JENVERSE Studio", wsUrl: "studio" };
+
 function WorkspaceSettings() {
+  const { value, setValue, save } = usePersistedState(
+    "jenverse:workspace",
+    WORKSPACE_DEFAULTS
+  );
+  const set = (k: keyof typeof WORKSPACE_DEFAULTS, v: string) =>
+    setValue((prev) => ({ ...prev, [k]: v }));
+
   return (
     <Card>
       <CardHeader>
@@ -210,7 +281,11 @@ function WorkspaceSettings() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="wsName">Workspace name</Label>
-            <Input id="wsName" defaultValue="JENVERSE Studio" />
+            <Input
+              id="wsName"
+              value={value.wsName}
+              onChange={(e) => set("wsName", e.target.value)}
+            />
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="wsUrl">Workspace URL</Label>
@@ -220,7 +295,8 @@ function WorkspaceSettings() {
               </span>
               <Input
                 id="wsUrl"
-                defaultValue="studio"
+                value={value.wsUrl}
+                onChange={(e) => set("wsUrl", e.target.value)}
                 className="rounded-l-none"
               />
             </div>
@@ -247,7 +323,13 @@ function WorkspaceSettings() {
           </div>
         </div>
         <div className="flex justify-end">
-          <Button variant="primary" onClick={() => toast("Workspace saved")}>
+          <Button
+            variant="primary"
+            onClick={() => {
+              save();
+              toast("Workspace saved");
+            }}
+          >
             Save workspace
           </Button>
         </div>
@@ -260,13 +342,13 @@ const plans = [
   {
     name: "Starter",
     price: "$0",
-    features: ["100 generations / mo", "1 project", "Community support"],
+    features: ["100 generations / mo", "1 workspace", "Community support"],
     current: false,
   },
   {
     name: "Pro",
     price: "$49",
-    features: ["60K credits / mo", "Unlimited projects", "Priority support"],
+    features: ["60K credits / mo", "Unlimited campaigns", "Priority support"],
     current: true,
   },
   {
@@ -414,8 +496,8 @@ const notificationPrefs = [
   },
   {
     id: "n2",
-    title: "Project activity",
-    desc: "Updates when teammates add to shared projects.",
+    title: "Campaign activity",
+    desc: "Updates when teammates add to shared campaigns.",
     on: true,
   },
   {

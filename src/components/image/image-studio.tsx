@@ -2,15 +2,12 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   Sparkles,
   Heart,
   Download,
   Wand2,
   Loader2,
-  Workflow,
-  X,
   ImageUp,
   Trash2,
   Info,
@@ -48,28 +45,17 @@ const ANGLES = [
   },
 ] as const;
 
-interface ActiveWorkflow {
-  id: string;
-  name: string;
-  modelId?: string;
-  mode?: GenMode;
-}
-
 export function ImageStudio({
-  activeWorkflow,
   initialPrompt = "",
   demoMode = false,
 }: {
-  activeWorkflow?: ActiveWorkflow;
   initialPrompt?: string;
   demoMode?: boolean;
 }) {
   const [images, setImages] = useState<GeneratedImage[]>(generatedImages);
-  const [mode, setMode] = useState<GenMode>(activeWorkflow?.mode ?? "text");
+  const [mode, setMode] = useState<GenMode>("text");
   const [prompt, setPrompt] = useState(initialPrompt);
-  const [model, setModel] = useState<string>(
-    activeWorkflow?.modelId ?? AI_MODELS.image[0].id
-  );
+  const [model, setModel] = useState<string>(AI_MODELS.image[0].id);
   const [style, setStyle] = useState(imageStyles[0]);
   const [ratio, setRatio] = useState(aspectRatios[0]);
   const [sourceImage, setSourceImage] = useState<string | null>(null);
@@ -174,30 +160,6 @@ export function ImageStudio({
             <code className="font-mono text-foreground">.env.local</code> and
             restart to generate real images.
           </p>
-        </div>
-      )}
-
-      {activeWorkflow && (
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-foreground bg-foreground px-4 py-3 text-background">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-foreground">
-              <Workflow className="h-4 w-4" />
-            </span>
-            <div className="text-sm">
-              <span className="text-background/60">Running workflow</span>{" "}
-              <span className="font-semibold">{activeWorkflow.name}</span>
-              <span className="ml-2 text-background/60">
-                — model & settings pre-applied
-              </span>
-            </div>
-          </div>
-          <Link
-            href="/image"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-background/70 transition-colors hover:bg-background/10 hover:text-background"
-            aria-label="Clear workflow"
-          >
-            <X className="h-4 w-4" />
-          </Link>
         </div>
       )}
 

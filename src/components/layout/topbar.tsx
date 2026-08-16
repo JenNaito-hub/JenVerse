@@ -9,6 +9,8 @@ import {
   Settings,
   BrainCircuit,
   ImageIcon,
+  PenLine,
+  Clapperboard,
 } from "lucide-react";
 
 import { currentUser } from "@/data/team";
@@ -30,10 +32,10 @@ import { GlobalSearch } from "./global-search";
 import { ThemeToggle } from "./theme-toggle";
 
 const notifications = [
-  { id: "n1", title: "Mara generated 6 images in Nova Campaign", time: "5m ago" },
-  { id: "n2", title: "Your “Helio Research Digest” brief is ready", time: "1h ago" },
-  { id: "n3", title: "Theo added 12 sources to Atlas Knowledge Base", time: "3h ago" },
-  { id: "n4", title: "You’re at 77% of monthly credits", time: "Yesterday" },
+  { id: "n1", title: "Content Studio tạo xong 12 bài mới", time: "5m ago" },
+  { id: "n2", title: "Lead Scraper thu 48 leads từ một video TikTok", time: "1h ago" },
+  { id: "n3", title: "Đã lên lịch 18 bài trên 6 kênh Facebook", time: "3h ago" },
+  { id: "n4", title: "Bạn đã dùng 77% credits trong tháng", time: "Yesterday" },
 ];
 
 export function Topbar() {
@@ -55,15 +57,27 @@ export function Topbar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuItem asChild>
-              <Link href="/knowledge">
-                <BrainCircuit className="h-4 w-4" />
-                Knowledge AI
+              <Link href="/content">
+                <PenLine className="h-4 w-4" />
+                Content Studio
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/image">
                 <ImageIcon className="h-4 w-4" />
                 Image AI
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/video">
+                <Clapperboard className="h-4 w-4" />
+                Video Studio
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/knowledge">
+                <BrainCircuit className="h-4 w-4" />
+                Knowledge AI
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -101,8 +115,13 @@ export function Topbar() {
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="justify-center text-sm text-muted-foreground">
-              View all activity
+            <DropdownMenuItem asChild>
+              <Link
+                href="/history"
+                className="justify-center text-sm text-muted-foreground"
+              >
+                View all activity
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
